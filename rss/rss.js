@@ -10,7 +10,11 @@ function getFeedFromUrl(url) {
         items.forEach(function(item) {
             var content = {
                 title: item.title,
-                author: item.author
+                author: item.author,
+                url: item.guid,
+                categories: item.categories,
+                publishDate: item.pubDate,
+                summary: item.summary
             }
             contents.push(content);
         });
@@ -23,13 +27,35 @@ function getFeedFromUrl(url) {
     return deferred.promise;
 }
 
-function getContents(req, res) {
+function addToElastic(contactId, content) {
+    var deferred = Q.defer();
+
+    console.log(contactId);
+
+    return deferred.promise;
+}
+
+function getContent(req, res) {
     var deferred = Q.defer();
 
     getFeedFromUrl(req.body.url)
-        .then(function(data) {
-            console.log(data);
-            res.status(200).end();
+        .then(function(content) {
+            addToElastic(req.body.contactId, content)
+                .then(function(status) {
+                    if (status) {
+                        deferred.resolve(true);
+                        res.status(200).end();
+                    } else {
+                        var error = 'Elasticsearch add failed';
+                        console.error(error);
+                        deferred.resolve(false);
+                        res.status(500).send(error);
+                    }
+                }, function (error) {
+                    console.error(error);
+                    deferred.resolve(false);
+                    res.status(500).send();
+                });
         }, function(error) {
             console.error(error);
             deferred.reject(new Error(error));
@@ -39,15 +65,16 @@ function getContents(req, res) {
     return deferred.promise;
 }
 
-exports.processFeed = function processFeed(req, res) {
-    return getContents();
+exports.processRSS = function processRSS(req, res) {
+    return getContent(req, res);
 };
 
 function testProcess() {
     req = mocks.createRequest();
     res = mocks.createResponse();
+    req.body.contactId = 5702224873259008;
     req.body.url = 'http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml';
-    return getContents(req, res);
+    return getContent(req, res);
 };
 
 testProcess();
