@@ -43,7 +43,8 @@ function addToElastic(contactId, content) {
         var indexRecord = {
             index: {
                 _index: 'headlines',
-                _type: 'headline'
+                _type: 'headline',
+                _id: content[i].Url
             }
         };
         var dataRecord = content[i];
