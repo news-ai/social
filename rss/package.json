@@ -9,6 +9,7 @@
   "author": "NewsAI",
   "license": "ISC",
   "dependencies": {
+    "elasticsearch": "^11.0.1",
     "feedparser": "^1.1.4",
     "feedparser-promised": "^1.1.1",
     "q": "^1.4.1",
