@@ -17,12 +17,12 @@ function getFeedFromUrl(url) {
         var contents = [];
         items.forEach(function(item) {
             var content = {
-                title: item.title,
-                author: item.author,
-                url: item.guid,
-                categories: item.categories,
-                publishDate: item.pubDate,
-                summary: item.summary
+                Title: item.title,
+                Author: item.author,
+                Url: item.guid,
+                Categories: item.categories,
+                PublishDate: item.pubDate,
+                Summary: item.summary
             }
             contents.push(content);
         });
