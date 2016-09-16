@@ -13,5 +13,8 @@
     "feedparser-promised": "^1.1.1",
     "q": "^1.4.1",
     "request": "^2.74.0"
+  },
+  "devDependencies": {
+    "node-mocks-http": "^1.5.4"
   }
 }
