@@ -24,23 +24,29 @@ function getTopic(cb) {
 }
 
 function addFeedToPubSub(contactId, url) {
+    var deferred = Q.defer();
+
     getTopic(function(err, topic) {
         if (err) {
+            deferred.reject(new Error(err));
             console.error('Error occurred while getting pubsub topic', err);
-            return;
+        } else {
+            topic.publish({
+                contactId: contactId,
+                url: url
+            }, function(err) {
+                if (err) {
+                    deferred.reject(new Error(err));
+                    console.error('Error occurred while queuing background task', err);
+                } else {
+                    deferred.resolve(true);
+                    console.info('Feed ' + url + ' sent to ' + topicName + ' pubsub');
+                }
+            });
         }
-
-        topic.publish({
-            contactId: contactId,
-            url: url
-        }, function(err) {
-            if (err) {
-                console.error('Error occurred while queuing background task', err);
-            } else {
-                console.info('Feed ' + url + ' sent to ' + topicName + ' pubsub');
-            }
-        });
     });
+
+    return deferred.promise;
 }
 
 function getLatestFeeds() {
@@ -50,6 +56,27 @@ function getLatestFeeds() {
 
     var query = datastore.createQuery('Feed');
     var feedQuery = query.filter('Updated', '>', time._d);
+
+    feedQuery.run(function(err, entities) {
+        console.log(entities);
+        entities.forEach(function(item) {
+            addFeedToPubSub(item.data.ContactId, item.data.FeedURL)
+                .then(function(status) {
+                    // Change the `Updated` time to now
+                    item.data.Updated = ???;
+                    datastore.save({
+                        key: item.key,
+                        data: item.data
+                    }, function(err) {
+                        if (err) {
+                            console.error(err);
+                        }
+                    });
+                }, function(error) {
+                    console.error(error);
+                });
+        });
+    });
 }
 
 function runFeeds() {
