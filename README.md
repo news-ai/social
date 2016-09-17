@@ -20,9 +20,16 @@ function testProcess() {
 Pub/Sub call:
 
 ```json
-{"url":"http://pagesix.com/author/cindy-adams/feed/", "contactId": 4934182044172288}
+{
+    "url": "http://pagesix.com/author/cindy-adams/feed/",
+    "contactId": 4934182044172288
+}
 ```
 
-Compute Engine:
+### Feeds
+
+Deployed on Google Compute Engine. Will run periodically to check any feed that needs to get fetched. The input is data from the datastore, and the output is a pub/sub call to `process-rss-feed` with `url` and `contactId`.
+
+### Compute Engine
 
 `gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-2"`

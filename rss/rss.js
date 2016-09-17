@@ -4,7 +4,7 @@ var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
 var gcloud = require('google-cloud')({
-  projectId: 'newsai-1166'
+    projectId: 'newsai-1166'
 });
 
 
@@ -174,9 +174,9 @@ subscribe(function(err, message) {
     }
     console.log('Received request to process rss feed ' + message.data.url);
     getContent(message.data)
-    .then(function (status) {
-        console.log('Completed execution for ' + message.data.url);
-    }, function (error) {
-        console.error(error);
-    });
+        .then(function(status) {
+            console.log('Completed execution for ' + message.data.url);
+        }, function(error) {
+            console.error(error);
+        });
 });
