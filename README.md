@@ -6,6 +6,8 @@ Feed loops through all the feeds in the API that haven't been processed. It call
 
 ### RSS
 
+Deployed on Google Compute Engine. Just need to send information to the Pub/Sub topic: `process-rss-feed`.
+
 ```
 function testProcess() {
     var data = {};
