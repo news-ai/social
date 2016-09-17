@@ -1,6 +1,7 @@
 var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
+var gcloud = require('gcloud');
 
 // Instantiate a elasticsearch client
 var client = new elasticsearch.Client({
@@ -9,6 +10,25 @@ var client = new elasticsearch.Client({
     rejectUnauthorized: false
 });
 
+// Initialize Google Cloud
+var topicName = 'process-rss-feed';
+var subscriptionName = 'node-rss';
+var pubsub = gcloud.pubsub({
+    projectId: 'newsai-1166'
+});
+
+// Get a Google Cloud topic
+function getTopic(cb) {
+    pubsub.createTopic(topicName, function(err, topic) {
+        // topic already exists.
+        if (err && err.code === 409) {
+            return cb(null, pubsub.topic(topicName));
+        }
+        return cb(err, topic);
+    });
+}
+
+// Extract all articles from a RSS URL
 function getFeedFromUrl(url) {
     var deferred = Q.defer();
 
@@ -82,7 +102,7 @@ function getContent(data) {
                         deferred.resolve(false);
                         throw new Error(error);
                     }
-                }, function (error) {
+                }, function(error) {
                     console.error(error);
                     deferred.resolve(false);
                     throw new Error(error);
@@ -96,15 +116,64 @@ function getContent(data) {
     return deferred.promise;
 }
 
-exports.processRSS = function processRSS(data) {
-    return getContent(data);
-};
+function subscribe(cb) {
+    var subscription;
 
-function testProcess() {
-    var data = {};
-    data.contactId = 4934182044172288;
-    data.url = 'http://pagesix.com/author/cindy-adams/feed/';
-    return getContent(data);
-};
+    // Event handlers
+    function handleMessage(message) {
+        cb(null, message);
+    }
 
-testProcess();
+    function handleError(err) {
+        console.error(err);
+    }
+
+    getTopic(function(err, topic) {
+        if (err) {
+            return cb(err);
+        }
+
+        topic.subscribe(subscriptionName, {
+            autoAck: true,
+            reuseExisting: true
+        }, function(err, sub) {
+            if (err) {
+                return cb(err);
+            }
+
+            subscription = sub;
+
+            // Listen to and handle message and error events
+            subscription.on('message', handleMessage);
+            subscription.on('error', handleError);
+
+            console.log('Listening to ' + topicName +
+                ' with subscription ' + subscriptionName);
+        });
+    });
+
+    // Subscription cancellation function
+    return function() {
+        if (subscription) {
+            // Remove event listeners
+            subscription.removeListener('message', handleMessage);
+            subscription.removeListener('error', handleError);
+            subscription = undefined;
+        }
+    };
+}
+
+subscribe(function(err, message) {
+    // Any errors received are considered fatal.
+    if (err) {
+        console.error(err);
+        throw err;
+    }
+    console.log('Received request to process rss feed ' + message.data.url);
+    getContent(message.data)
+    .then(function (status) {
+        console.log('Completed execution for ' + message.data.url);
+    }, function (error) {
+        console.error(error);
+    });
+});

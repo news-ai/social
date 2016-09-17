@@ -1,11 +1,22 @@
 # social
 
-Getting data from RSS, and twitter through Google Cloud Functions.
+Getting data from RSS, and twitter through Google Cloud Functions, Pub/Sub, and Google Compute Engine.
 
 Feed loops through all the feeds in the API that haven't been processed. It calls the RSS function for each feed. The RSS function gets the RSS headlines and writes them to ES.
 
 ### RSS
 
-Deploy RSS: `cd rss` then `gcloud alpha functions deploy processRSS --stage-bucket datastore_elastic_api_sync --trigger-topic datastore-process-rss-functions --region us-central1`
+```
+function testProcess() {
+    var data = {};
+    data.contactId = 4934182044172288;
+    data.url = 'http://pagesix.com/author/cindy-adams/feed/';
+    return getContent(data);
+};
+```
 
-Get logs for RSS: `gcloud alpha functions get-logs processRSS`
+Pub/Sub call:
+
+```json
+{"url":"http://pagesix.com/author/cindy-adams/feed/", "contactId": 4934182044172288}
+```
