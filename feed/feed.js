@@ -53,14 +53,13 @@ function addFeedToPubSub(contactId, url) {
 
 function getLatestFeeds() {
     var time = moment();
-    var fifteenMinutes = moment.duration(1, 'minutes');
+    var fifteenMinutes = moment.duration(15, 'minutes');
     time.subtract(fifteenMinutes);
 
     var query = datastore.createQuery('Feed');
     var feedQuery = query.filter('Updated', '<', time._d);
 
     feedQuery.run(function(err, entities) {
-        console.log(entities);
         entities.forEach(function(item) {
             addFeedToPubSub(item.data.ContactId, item.data.FeedURL)
                 .then(function(status) {
@@ -83,10 +82,12 @@ function getLatestFeeds() {
 
 function runFeeds() {
     // Run one initially -- mostly for when testing
+    console.log('Beginning run');
     getLatestFeeds();
 
     // Run feed code every fifteen minutes
     setInterval(function() {
+        console.log('Processing feeds');
         getLatestFeeds();
     }, 15 * 60 * 1000);
 }
