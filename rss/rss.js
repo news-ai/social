@@ -3,7 +3,10 @@
 var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
-var gcloud = require('gcloud');
+var gcloud = require('google-cloud')({
+  projectId: 'grape-spaceship-123'
+});
+
 
 // Instantiate a elasticsearch client
 var client = new elasticsearch.Client({
@@ -15,9 +18,7 @@ var client = new elasticsearch.Client({
 // Initialize Google Cloud
 var topicName = 'process-rss-feed';
 var subscriptionName = 'node-rss';
-var pubsub = gcloud.pubsub({
-    projectId: 'newsai-1166'
-});
+var pubsub = gcloud.pubsub();
 
 // Get a Google Cloud topic
 function getTopic(cb) {

@@ -13,6 +13,7 @@
     "feedparser": "^1.1.4",
     "feedparser-promised": "^1.1.1",
     "gcloud": "^0.37.0",
+    "google-cloud": "^0.40.0",
     "q": "^1.4.1",
     "request": "^2.74.0"
   },
