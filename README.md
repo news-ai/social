@@ -22,3 +22,7 @@ Pub/Sub call:
 ```json
 {"url":"http://pagesix.com/author/cindy-adams/feed/", "contactId": 4934182044172288}
 ```
+
+Compute Engine:
+
+`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-2"`

@@ -4,7 +4,7 @@ var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
 var gcloud = require('google-cloud')({
-  projectId: 'grape-spaceship-123'
+  projectId: 'newsai-1166'
 });
 
 
