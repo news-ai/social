@@ -32,8 +32,10 @@ function addFeedToPubSub(contactId, url) {
             console.error('Error occurred while getting pubsub topic', err);
         } else {
             topic.publish({
-                contactId: contactId,
-                url: url
+                data: {
+                    contactId: contactId,
+                    url: url
+                }
             }, function(err) {
                 if (err) {
                     deferred.reject(new Error(err));
@@ -51,11 +53,11 @@ function addFeedToPubSub(contactId, url) {
 
 function getLatestFeeds() {
     var time = moment();
-    var fifteenMinutes = moment.duration(15, 'minutes');
+    var fifteenMinutes = moment.duration(1, 'minutes');
     time.subtract(fifteenMinutes);
 
     var query = datastore.createQuery('Feed');
-    var feedQuery = query.filter('Updated', '>', time._d);
+    var feedQuery = query.filter('Updated', '<', time._d);
 
     feedQuery.run(function(err, entities) {
         console.log(entities);
@@ -63,7 +65,7 @@ function getLatestFeeds() {
             addFeedToPubSub(item.data.ContactId, item.data.FeedURL)
                 .then(function(status) {
                     // Change the `Updated` time to now
-                    item.data.Updated = ???;
+                    item.data.Updated = moment()._d;
                     datastore.save({
                         key: item.key,
                         data: item.data
@@ -80,8 +82,12 @@ function getLatestFeeds() {
 }
 
 function runFeeds() {
-    setInterval(function() {
+    // Run one initially -- mostly for when testing
+    getLatestFeeds();
 
+    // Run feed code every fifteen minutes
+    setInterval(function() {
+        getLatestFeeds();
     }, 15 * 60 * 1000);
 }
 
