@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "@google-cloud/datastore": "^0.1.1",
-    "q": "^1.4.1"
+    "moment": "^2.15.0",
+    "q": "^1.4.1",
+    "google-cloud": "^0.40.0"
   },
   "author": "NewsAI",
   "license": "ISC"
