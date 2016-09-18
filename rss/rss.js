@@ -57,7 +57,7 @@ function getFeedFromUrl(url) {
     return deferred.promise;
 }
 
-function addToElastic(contactId, content) {
+function addToElastic(contactId, listId, content) {
     var deferred = Q.defer();
 
     var esActions = [];
@@ -71,6 +71,7 @@ function addToElastic(contactId, content) {
         };
         var dataRecord = content[i];
         dataRecord.ContactId = contactId;
+        dataRecord.ListId = listId;
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord
@@ -95,7 +96,7 @@ function getContent(data) {
 
     getFeedFromUrl(data.url)
         .then(function(content) {
-            addToElastic(data.contactId, content)
+            addToElastic(data.contactId, data.listId, content)
                 .then(function(status) {
                     if (status) {
                         deferred.resolve(true);
