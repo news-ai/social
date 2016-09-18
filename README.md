@@ -32,4 +32,4 @@ Deployed on Google Compute Engine. Will run periodically to check any feed that 
 
 ### Compute Engine
 
-`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-2"`
+`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
