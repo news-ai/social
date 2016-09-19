@@ -97,7 +97,7 @@ function getContent(data) {
 
     getFeedFromUrl(data.url)
         .then(function(content) {
-            addToElastic(data.contactId, data.listId, data.publicationid, content)
+            addToElastic(data.contactId, data.listId, data.publicationId, content)
                 .then(function(status) {
                     if (status) {
                         deferred.resolve(true);
