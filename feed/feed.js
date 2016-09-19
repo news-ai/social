@@ -23,7 +23,7 @@ function getTopic(cb) {
     });
 }
 
-function addFeedToPubSub(contactId, listId, url) {
+function addFeedToPubSub(contactId, listId, publicationId, url) {
     var deferred = Q.defer();
 
     getTopic(function(err, topic) {
@@ -35,6 +35,7 @@ function addFeedToPubSub(contactId, listId, url) {
                 data: {
                     contactId: contactId,
                     listId: listId,
+                    publicationId: publicationId,
                     url: url,
                 }
             }, function(err) {
@@ -62,7 +63,7 @@ function getLatestFeeds() {
 
     feedQuery.run(function(err, entities) {
         entities.forEach(function(item) {
-            addFeedToPubSub(item.data.ContactId, item.data.ListId, item.data.FeedURL)
+            addFeedToPubSub(item.data.ContactId, item.data.ListId, item.data.PublicationId, item.data.FeedURL)
                 .then(function(status) {
                     // Change the `Updated` time to now
                     item.data.Updated = moment()._d;
