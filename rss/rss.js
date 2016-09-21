@@ -44,7 +44,8 @@ function getFeedFromUrl(url) {
                 Url: item.guid,
                 Categories: item.categories,
                 PublishDate: item.pubDate,
-                Summary: item.summary
+                Summary: item.summary,
+                FeedURL: url
             }
             contents.push(content);
         });
