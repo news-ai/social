@@ -3,22 +3,22 @@
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
 var Twitter = require('twitter');
-// var gcloud = require('google-cloud')({
-//     projectId: 'newsai-1166'
-// });
+var gcloud = require('google-cloud')({
+    projectId: 'newsai-1166'
+});
 
 
-// // Instantiate a elasticsearch client
-// var client = new elasticsearch.Client({
-//     host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
-//     // log: 'trace',
-//     rejectUnauthorized: false
-// });
+// Instantiate a elasticsearch client
+var elasticSearchClient = new elasticsearch.Client({
+    host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
+    // log: 'trace',
+    rejectUnauthorized: false
+});
 
 // Initialize Google Cloud
-// var topicName = 'process-twitter-feed';
-// var subscriptionName = 'node-new-user-twitter';
-// var pubsub = gcloud.pubsub();
+var topicName = 'process-twitter-feed';
+var subscriptionName = 'node-new-user-twitter';
+var pubsub = gcloud.pubsub();
 
 var twitterClient = new Twitter({
     consumer_key: 'nu83S4GaW4vrsN6gPoTbSvuMy',
@@ -47,9 +47,9 @@ function getTweetsFromUsername(username) {
         count: 10
     }, function(error, tweets, response) {
         if (!error) {
-            console.log(tweets);
+            deferred.resolve(tweets);
         } else {
-            console.error(tweets);
+            deferred.reject(new Error(error));
         }
     });
 
@@ -57,15 +57,63 @@ function getTweetsFromUsername(username) {
 }
 
 // Add these tweets to ElasticSearch
+// contactId here is the base parent contactId.
+// Not just a contactId of any user.
 function addToElastic(contactId, tweets) {
     var deferred = Q.defer();
+
+    var user = tweets[0].user;
+    var tweetsToAdd = [];
+
+    for (var i = tweets.length - 1; i >= 0; i--) {
+        tweetsToAdd.push({
+            'Id': tweets[i].id,
+            'text': tweets[i].text
+        });
+    }
+
+    var esActions = [];
+    for (var i = tweetsToAdd.length - 1; i >= 0; i--) {
+        var indexRecord = {
+            index: {
+                _index: 'tweets',
+                _type: 'tweet',
+                _id: tweetsToAdd[i].Id
+            }
+        };
+        var dataRecord = tweetsToAdd[i];
+        dataRecord.ContactId = contactId;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+    }
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            deferred.reject(error);
+        }
+        deferred.resolve(user);
+    });
 
     return deferred.promise;
 }
 
 // Follow this user on Twitter to stream tweets
-function followOnTwitter(twitterUser) {
+function followOnTwitter(user) {
     var deferred = Q.defer();
+
+    twitterClient.post('friendships/create', {
+        user_id: user.id,
+        follow: true
+    }, function(error, response) {
+        if (!error) {
+            deferred.resolve(true);
+        }
+        deferred.reject(error);
+    });
 
     return deferred.promise;
 }
@@ -77,33 +125,25 @@ function processTwitterUser(data) {
     // Get tweets for a user
     getTweetsFromUsername(data.username).then(function(tweets) {
         // Add tweets to elasticsearch
-        addToElastic(data.contactId, tweets).then(function(status) {
-            if (status) {
+        addToElastic(data.contactId, tweets).then(function(user) {
+            if (user) {
                 // Follow the user on the NewsAIHQ Twitter so we can stream the
                 // Tweets later.
-                followOnTwitter(data.username).then(function(response) {
+                followOnTwitter(user).then(function(response) {
                     deferred.resolve(true);
                 }, function(error) {
-                    console.error(error);
-                    deferred.resolve(false);
-                    throw new Error(error);
+                    deferred.reject(error);
                 });
             } else {
                 var error = 'Elasticsearch add failed';
-                console.error(error);
-                deferred.resolve(false);
-                throw new Error(error);
+                deferred.reject(new Error(error));
             }
         }, function(error) {
-            console.error(error);
-            deferred.resolve(false);
-            throw new Error(error);
+            deferred.reject(error);
         });
 
     }, function(error) {
-        console.error(error);
-        deferred.resolve(false);
-        throw new Error(error);
+        deferred.reject(error);
     });
 
     return deferred.promise;
@@ -175,8 +215,8 @@ function subscribe(cb) {
 
 var message = {
     data: {
-        username: 'kanarula',
-        contactId: 4896083670990848
+        username: 'abhiagarwal',
+        contactId: 4903551276941312
     }
 };
 
