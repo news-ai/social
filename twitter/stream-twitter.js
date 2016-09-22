@@ -101,6 +101,10 @@ function processTweet(tweet) {
 // Incoming tweet for a particular user - add to ElasticSearch
 stream.on('data', function(tweet) {
     if (!tweet.friends) {
-        processTweet(tweet);
+        processTweet(tweet).then(function (response) {
+            console.log(response);
+        }, function (error) {
+            console.error(error);
+        });
     }
 });
