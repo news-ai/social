@@ -20,7 +20,90 @@ var stream = new Stream({
 });
 stream.stream();
 
+function addTweetToEs(tweet, contactId) {
+    var deferred = Q.defer();
+
+    var tweetToAdd = {
+        'Id': tweet.id,
+        'text': tweet.text,
+        'CreatedAt': tweet.created_at
+    };
+
+    var indexRecord = {
+        index: {
+            _index: 'tweets',
+            _type: 'tweet',
+            _id: tweetToAdd.Id
+        }
+    };
+    var dataRecord = tweetToAdd;
+    dataRecord.ContactId = contactId;
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
+    });
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            deferred.reject(error);
+        }
+        deferred.resolve(true);
+    });
+
+    return deferred.promise;
+}
+
+function findContactIdFromTwitterId(twitterId) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.search({
+        q: 'data.id:' + twitterId
+    }).then(function(body) {
+        var hits = body.hits.hits;
+        if (hits.length > 0) {
+            deferred.resolve(hits[0]._source.data.ContactId);
+        } else {
+            deferred.reject('Did not get any hits');
+        }
+    }, function(error) {
+        deferred.reject(error);
+    });
+
+    return deferred.promise;
+}
+
+function processTweet(tweet) {
+    var deferred = Q.defer();
+
+    console.log(tweet);
+
+    if (tweet && tweet.user && tweet.user.id) {
+        findContactIdFromTwitterId(tweet.user.id).then(function(contactId) {
+            addTweetToEs(tweet, contactId).then(function(status) {
+                if (status) {
+                    deferred.resolve(true);
+                } else {
+                    deferred.reject('Elasticsearch add failed');
+                }
+            }, function(error) {
+                deferred.reject(error);
+            });
+        }, function(error) {
+            deferred.reject(error);
+        });
+    } else {
+        deferred.reject('Not supporting removing tweets yet');
+    }
+
+    return deferred.promise;
+}
+
 // Incoming tweet for a particular user - add to ElasticSearch
-stream.on('data', function(json) {
-    console.log(json);
+stream.on('data', function(tweet) {
+    if (!tweet.friends) {
+        processTweet(tweet);
+    }
+    console.log(tweet);
 });
