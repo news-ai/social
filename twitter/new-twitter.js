@@ -135,8 +135,7 @@ function processTwitterUser(data) {
                     deferred.reject(error);
                 });
             } else {
-                var error = 'Elasticsearch add failed';
-                deferred.reject(new Error(error));
+                deferred.reject(new Error('Elasticsearch add failed'));
             }
         }, function(error) {
             deferred.reject(error);
@@ -197,32 +196,18 @@ function subscribe(cb) {
     };
 }
 
-// // Begin subscription
-// subscribe(function(err, message) {
-//     // Any errors received are considered fatal.
-//     if (err) {
-//         console.error(err);
-//         throw err;
-//     }
-//     console.log('Received request to process twitter feed ' + message.data.username);
-//     processTwitterUser(message.data)
-//         .then(function(status) {
-//             console.log('Completed execution for ' + message.data.username);
-//         }, function(error) {
-//             console.error(error);
-//         });
-// });
-
-var message = {
-    data: {
-        username: 'abhiagarwal',
-        contactId: 4903551276941312
+// Begin subscription
+subscribe(function(err, message) {
+    // Any errors received are considered fatal.
+    if (err) {
+        console.error(err);
+        throw err;
     }
-};
-
-processTwitterUser(message.data)
-    .then(function(status) {
-        console.log('Completed execution for ' + message.data.username);
-    }, function(error) {
-        console.error(error);
-    });
+    console.log('Received request to process twitter feed ' + message.data.username);
+    processTwitterUser(message.data)
+        .then(function(status) {
+            console.log('Completed execution for ' + message.data.username);
+        }, function(error) {
+            console.error(error);
+        });
+});
