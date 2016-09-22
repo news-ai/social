@@ -33,3 +33,8 @@ Deployed on Google Compute Engine. Will run periodically to check any feed that 
 ### Compute Engine
 
 `gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
+
+### Twitter
+
+- `new-twitter.js` takes Pub/Sub of `username, contactId`.
+- `stream-twitter.js` doesn't need anything to run.
