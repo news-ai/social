@@ -77,8 +77,6 @@ function findContactIdFromTwitterId(twitterId) {
 function processTweet(tweet) {
     var deferred = Q.defer();
 
-    console.log(tweet);
-
     if (tweet && tweet.user && tweet.user.id) {
         findContactIdFromTwitterId(tweet.user.id).then(function(contactId) {
             addTweetToEs(tweet, contactId).then(function(status) {
@@ -105,5 +103,4 @@ stream.on('data', function(tweet) {
     if (!tweet.friends) {
         processTweet(tweet);
     }
-    console.log(tweet);
 });
