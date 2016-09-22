@@ -94,7 +94,7 @@ function addToElastic(contactId, tweets) {
         index: {
             _index: 'tweets',
             _type: 'user',
-            _id: user.Id
+            _id: contactId
         }
     };
     var dataRecord = user;
@@ -227,7 +227,7 @@ subscribe(function(err, message) {
         });
 });
 
-// Code for testing the functions above
+// // Code for testing the functions above
 // var message = {
 //     data: {
 //         username: 'abhiagarwal',
