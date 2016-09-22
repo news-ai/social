@@ -47,6 +47,7 @@ function addTweetToEs(tweet, contactId) {
         body: esActions
     }, function(error, response) {
         if (error) {
+            console.error(error);
             deferred.reject(error);
         }
         deferred.resolve(true);
@@ -65,9 +66,12 @@ function findContactIdFromTwitterId(twitterId) {
         if (hits.length > 0) {
             deferred.resolve(hits[0]._source.data.ContactId);
         } else {
-            deferred.reject('Did not get any hits');
+            var error = 'Did not get any hits';
+            console.error(error);
+            deferred.reject(error);
         }
     }, function(error) {
+        console.error(error);
         deferred.reject(error);
     });
 
@@ -83,16 +87,22 @@ function processTweet(tweet) {
                 if (status) {
                     deferred.resolve(true);
                 } else {
-                    deferred.reject('Elasticsearch add failed');
+                    var error = 'Elasticsearch add failed';
+                    console.error(error);
+                    deferred.reject(error);
                 }
             }, function(error) {
+                console.error(error);
                 deferred.reject(error);
             });
         }, function(error) {
+            console.error(error);
             deferred.reject(error);
         });
     } else {
-        deferred.reject('Not supporting removing tweets yet');
+        var error = 'Not supporting removing tweets yet';
+        console.error(error);
+        deferred.reject(error);
     }
 
     return deferred.promise;
@@ -101,7 +111,7 @@ function processTweet(tweet) {
 // Incoming tweet for a particular user - add to ElasticSearch
 stream.on('data', function(tweet) {
     if (!tweet.friends) {
-        console.log(tweet.id);
+        console.log(tweet);
         processTweet(tweet).then(function (response) {
             console.log(response);
         }, function (error) {
