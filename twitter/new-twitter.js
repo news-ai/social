@@ -89,6 +89,21 @@ function addToElastic(contactId, tweets) {
         });
     }
 
+    // Add user to ElasticSearch as well
+    var indexRecord = {
+        index: {
+            _index: 'tweets',
+            _type: 'user',
+            _id: user.Id
+        }
+    };
+    var dataRecord = user;
+    dataRecord.ContactId = contactId;
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
+    });
+
     elasticSearchClient.bulk({
         body: esActions
     }, function(error, response) {
@@ -211,3 +226,18 @@ subscribe(function(err, message) {
             console.error(error);
         });
 });
+
+// Code for testing the functions above
+// var message = {
+//     data: {
+//         username: 'abhiagarwal',
+//         contactId: 4903551276941312
+//     }
+// };
+
+// processTwitterUser(message.data)
+//     .then(function(status) {
+//         console.log('Completed execution for ' + message.data.username);
+//     }, function(error) {
+//         console.error(error);
+//     });
