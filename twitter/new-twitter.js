@@ -2,22 +2,30 @@
 
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
-var gcloud = require('google-cloud')({
-    projectId: 'newsai-1166'
-});
+var Twitter = require('twitter');
+// var gcloud = require('google-cloud')({
+//     projectId: 'newsai-1166'
+// });
 
 
-// Instantiate a elasticsearch client
-var client = new elasticsearch.Client({
-    host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
-    // log: 'trace',
-    rejectUnauthorized: false
-});
+// // Instantiate a elasticsearch client
+// var client = new elasticsearch.Client({
+//     host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
+//     // log: 'trace',
+//     rejectUnauthorized: false
+// });
 
 // Initialize Google Cloud
-var topicName = 'process-twitter-feed';
-var subscriptionName = 'node-new-user-twitter';
-var pubsub = gcloud.pubsub();
+// var topicName = 'process-twitter-feed';
+// var subscriptionName = 'node-new-user-twitter';
+// var pubsub = gcloud.pubsub();
+
+var twitterClient = new Twitter({
+    consumer_key: 'nu83S4GaW4vrsN6gPoTbSvuMy',
+    consumer_secret: 't86zlLxN7mjwHu9OMflX806StaqSFWfLMTOiiFLmOuwI5kUFFE',
+    access_token_key: '758002735547609088-bPZJ1mO8nPfHq52FquOh0tsaWa6Fc28',
+    access_token_secret: 'NIYOhbJZSFzKNRJGVdtPlzMnzKet9bHdwH08ghw9TmzWr'
+});
 
 // Get a Google Cloud topic
 function getTopic(cb) {
@@ -34,18 +42,29 @@ function getTopic(cb) {
 function getTweetsFromUsername(username) {
     var deferred = Q.defer();
 
+    twitterClient.get('statuses/user_timeline', {
+        screen_name: username,
+        count: 10
+    }, function(error, tweets, response) {
+        if (!error) {
+            console.log(tweets);
+        } else {
+            console.error(tweets);
+        }
+    });
+
     return deferred.promise;
 }
 
 // Add these tweets to ElasticSearch
-function addToElastic(publicationId, content) {
+function addToElastic(contactId, tweets) {
     var deferred = Q.defer();
 
     return deferred.promise;
 }
 
 // Follow this user on Twitter to stream tweets
-function followOnTwitter(twitterUser, content) {
+function followOnTwitter(twitterUser) {
     var deferred = Q.defer();
 
     return deferred.promise;
@@ -54,6 +73,38 @@ function followOnTwitter(twitterUser, content) {
 // Process a particular Twitter user
 function processTwitterUser(data) {
     var deferred = Q.defer();
+
+    // Get tweets for a user
+    getTweetsFromUsername(data.username).then(function(tweets) {
+        // Add tweets to elasticsearch
+        addToElastic(data.contactId, tweets).then(function(status) {
+            if (status) {
+                // Follow the user on the NewsAIHQ Twitter so we can stream the
+                // Tweets later.
+                followOnTwitter(data.username).then(function(response) {
+                    deferred.resolve(true);
+                }, function(error) {
+                    console.error(error);
+                    deferred.resolve(false);
+                    throw new Error(error);
+                });
+            } else {
+                var error = 'Elasticsearch add failed';
+                console.error(error);
+                deferred.resolve(false);
+                throw new Error(error);
+            }
+        }, function(error) {
+            console.error(error);
+            deferred.resolve(false);
+            throw new Error(error);
+        });
+
+    }, function(error) {
+        console.error(error);
+        deferred.resolve(false);
+        throw new Error(error);
+    });
 
     return deferred.promise;
 }
@@ -106,18 +157,32 @@ function subscribe(cb) {
     };
 }
 
-// Begin subscription
-subscribe(function(err, message) {
-    // Any errors received are considered fatal.
-    if (err) {
-        console.error(err);
-        throw err;
+// // Begin subscription
+// subscribe(function(err, message) {
+//     // Any errors received are considered fatal.
+//     if (err) {
+//         console.error(err);
+//         throw err;
+//     }
+//     console.log('Received request to process twitter feed ' + message.data.username);
+//     processTwitterUser(message.data)
+//         .then(function(status) {
+//             console.log('Completed execution for ' + message.data.username);
+//         }, function(error) {
+//             console.error(error);
+//         });
+// });
+
+var message = {
+    data: {
+        username: 'kanarula',
+        contactId: 4896083670990848
     }
-    console.log('Received request to process twitter feed ' + message.data.url);
-    processTwitterUser(message.data)
-        .then(function(status) {
-            console.log('Completed execution for ' + message.data.url);
-        }, function(error) {
-            console.error(error);
-        });
-});
+};
+
+processTwitterUser(message.data)
+    .then(function(status) {
+        console.log('Completed execution for ' + message.data.username);
+    }, function(error) {
+        console.error(error);
+    });
