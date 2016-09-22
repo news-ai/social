@@ -23,6 +23,8 @@ stream.stream();
 function addTweetToEs(tweet, contactId) {
     var deferred = Q.defer();
 
+    var esActions = [];
+
     var tweetToAdd = {
         'Id': tweet.id,
         'text': tweet.text,
@@ -33,9 +35,10 @@ function addTweetToEs(tweet, contactId) {
         index: {
             _index: 'tweets',
             _type: 'tweet',
-            _id: tweetToAdd.Id
+            _id: tweet.id
         }
     };
+
     var dataRecord = tweetToAdd;
     dataRecord.ContactId = contactId;
     esActions.push(indexRecord);
@@ -110,8 +113,8 @@ function processTweet(tweet) {
 
 // Incoming tweet for a particular user - add to ElasticSearch
 stream.on('data', function(tweet) {
+    console.log(tweet.id);
     if (!tweet.friends) {
-        console.log(tweet);
         processTweet(tweet).then(function (response) {
             console.log(response);
         }, function (error) {
