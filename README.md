@@ -30,11 +30,20 @@ Pub/Sub call:
 
 Deployed on Google Compute Engine. Will run periodically to check any feed that needs to get fetched. The input is data from the datastore, and the output is a pub/sub call to `process-rss-feed` with `url` and `contactId`.
 
-### Compute Engine
-
-`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
-
 ### Twitter
 
 - `new-twitter.js` takes Pub/Sub of `username, contactId`.
+
+Pub/Sub call:
+
+```json
+{
+    "username": "abhiagarwal",
+    "contactId": 4903551276941312
+}
+
 - `stream-twitter.js` doesn't need anything to run.
+
+### Compute Engine
+
+`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
