@@ -26,7 +26,7 @@ function addTweetToEs(tweet, contactId) {
     var esActions = [];
 
     var tweetToAdd = {
-        'Id': tweet.id,
+        'TwitterId': tweet.id,
         'Text': tweet.text,
         'CreatedAt': Date(tweet.created_at)
     };
