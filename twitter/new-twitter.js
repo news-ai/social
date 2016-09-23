@@ -1,6 +1,7 @@
 'use strict';
 
 var elasticsearch = require('elasticsearch');
+var moment = require('moment');
 var Q = require('q');
 var Twitter = require('twitter');
 var gcloud = require('google-cloud')({
@@ -66,9 +67,9 @@ function addToElastic(contactId, tweets) {
 
     for (var i = tweets.length - 1; i >= 0; i--) {
         tweetsToAdd.push({
-            'TwitterId': tweets[i].id,
+            'TweetId': tweets[i].id,
             'Text': tweets[i].text,
-            'CreatedAt': Date(tweets[i].created_at) // damn you Twitter and your dates
+            'CreatedAt': moment(tweets[i].created_at).format('YYYY-MM-DDTHH:mm:ss') // damn you Twitter and your dates
         });
     }
 

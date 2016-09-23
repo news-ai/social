@@ -1,6 +1,7 @@
 'use strict';
 
 var elasticsearch = require('elasticsearch');
+var moment = require('moment');
 var Q = require('q');
 var Stream = require('user-stream');
 
@@ -26,9 +27,9 @@ function addTweetToEs(tweet, contactId) {
     var esActions = [];
 
     var tweetToAdd = {
-        'TwitterId': tweet.id,
+        'TweetId': tweet.id,
         'Text': tweet.text,
-        'CreatedAt': Date(tweet.created_at)
+        'CreatedAt': moment(tweet.created_at).format('YYYY-MM-DDTHH:mm:ss')
     };
 
     var indexRecord = {
