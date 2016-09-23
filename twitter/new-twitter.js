@@ -67,8 +67,8 @@ function addToElastic(contactId, tweets) {
     for (var i = tweets.length - 1; i >= 0; i--) {
         tweetsToAdd.push({
             'Id': tweets[i].id,
-            'text': tweets[i].text,
-            'CreatedAt': tweets[i].created_at
+            'Text': tweets[i].text,
+            'CreatedAt': Date(tweets[i].created_at) // damn you Twitter and your dates
         });
     }
 

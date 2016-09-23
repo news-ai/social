@@ -27,8 +27,8 @@ function addTweetToEs(tweet, contactId) {
 
     var tweetToAdd = {
         'Id': tweet.id,
-        'text': tweet.text,
-        'CreatedAt': tweet.created_at
+        'Text': tweet.text,
+        'CreatedAt': Date(tweet.created_at)
     };
 
     var indexRecord = {
