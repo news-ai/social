@@ -38,11 +38,10 @@ function getFeedFromUrl(url) {
     feedparser.parse(url).then(function(items) {
         var contents = [];
 
-        if (!item.pubDate) {
-            item.pubDate = Date.now();
-        }
-
         items.forEach(function(item) {
+            if (!item.pubDate) {
+                item.pubDate = Date.now();
+            }
             var content = {
                 Title: item.title,
                 Author: item.author,
