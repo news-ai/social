@@ -1,5 +1,6 @@
 'use strict';
 
+var moment = require('moment');
 var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
@@ -40,7 +41,25 @@ function getFeedFromUrl(url) {
 
         items.forEach(function(item) {
             if (!item.pubDate) {
-                item.pubDate = Date.now();
+                item.pubDate = moment().format('YYYY-MM-DDTHH:mm:ss');
+            }
+            if (!item.title) {
+                item.title = "";
+            }
+            if (!item.author) {
+                item.author = "";
+            }
+            if (!item.guid) {
+                item.guid = "";
+            }
+            if (!item.categories) {
+                item.categories = [];
+            }
+            if (!item.summary) {
+                item.summary = "";
+            }
+            if (!url) {
+                url = "";
             }
             var content = {
                 Title: item.title,
