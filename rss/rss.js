@@ -37,6 +37,11 @@ function getFeedFromUrl(url) {
 
     feedparser.parse(url).then(function(items) {
         var contents = [];
+
+        if (!item.pubDate) {
+            item.pubDate = Date.now();
+        }
+
         items.forEach(function(item) {
             var content = {
                 Title: item.title,
