@@ -57,9 +57,9 @@ function getTweetsFromUsername(username) {
 }
 
 // Add these tweets to ElasticSearch
-// contactId here is the base parent contactId.
-// Not just a contactId of any user.
-function addToElastic(contactId, tweets) {
+// username here is the base parent username.
+// Not just a username of any user.
+function addToElastic(username, tweets) {
     var deferred = Q.defer();
 
     var user = tweets[0].user;
@@ -83,7 +83,7 @@ function addToElastic(contactId, tweets) {
             }
         };
         var dataRecord = tweetsToAdd[i];
-        dataRecord.ContactId = contactId;
+        dataRecord.Username = username;
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord
@@ -141,7 +141,7 @@ function processTwitterUser(data) {
     // Get tweets for a user
     getTweetsFromUsername(data.username).then(function(tweets) {
         // Add tweets to elasticsearch
-        addToElastic(data.contactId, tweets).then(function(user) {
+        addToElastic(data.username, tweets).then(function(user) {
             if (user) {
                 // Follow the user on the NewsAIHQ Twitter so we can stream the
                 // Tweets later.
