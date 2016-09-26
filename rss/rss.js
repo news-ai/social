@@ -42,6 +42,8 @@ function getFeedFromUrl(url) {
         items.forEach(function(item) {
             if (!item.pubDate) {
                 item.pubDate = moment().format('YYYY-MM-DDTHH:mm:ss');
+            } else {
+                item.pubDate = moment(item.pubDate).format('YYYY-MM-DDTHH:mm:ss');
             }
             if (!item.title) {
                 item.title = "";
