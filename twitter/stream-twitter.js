@@ -21,7 +21,7 @@ var stream = new Stream({
 });
 stream.stream();
 
-function addTweetToEs(tweet, contactId) {
+function addTweetToEs(tweet, username) {
     var deferred = Q.defer();
 
     var esActions = [];
@@ -41,7 +41,7 @@ function addTweetToEs(tweet, contactId) {
     };
 
     var dataRecord = tweetToAdd;
-    dataRecord.ContactId = contactId;
+    dataRecord.Username = username;
     esActions.push(indexRecord);
     esActions.push({
         data: dataRecord
@@ -60,7 +60,7 @@ function addTweetToEs(tweet, contactId) {
     return deferred.promise;
 }
 
-function findContactIdFromTwitterId(twitterId) {
+function findUsernameFromTwitterId(twitterId) {
     var deferred = Q.defer();
 
     elasticSearchClient.search({
@@ -68,7 +68,7 @@ function findContactIdFromTwitterId(twitterId) {
     }).then(function(body) {
         var hits = body.hits.hits;
         if (hits.length > 0) {
-            deferred.resolve(hits[0]._source.data.ContactId);
+            deferred.resolve(hits[0]._source.data.screen_name);
         } else {
             var error = 'Did not get any hits';
             console.error(error);
@@ -86,8 +86,8 @@ function processTweet(tweet) {
     var deferred = Q.defer();
 
     if (tweet && tweet.user && tweet.user.id) {
-        findContactIdFromTwitterId(tweet.user.id).then(function(contactId) {
-            addTweetToEs(tweet, contactId).then(function(status) {
+        findUsernameFromTwitterId(tweet.user.id).then(function(username) {
+            addTweetToEs(tweet, username).then(function(status) {
                 if (status) {
                     deferred.resolve(true);
                 } else {

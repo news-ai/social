@@ -95,11 +95,11 @@ function addToElastic(username, tweets) {
         index: {
             _index: 'tweets',
             _type: 'user',
-            _id: contactId
+            _id: username
         }
     };
     var dataRecord = user;
-    dataRecord.ContactId = contactId;
+    dataRecord.Username = username;
     esActions.push(indexRecord);
     esActions.push({
         data: dataRecord
@@ -231,8 +231,7 @@ subscribe(function(err, message) {
 // // Code for testing the functions above
 // var message = {
 //     data: {
-//         username: 'abhiagarwal',
-//         contactId: 4903551276941312
+//         username: 'abhiagarwal'
 //     }
 // };
 
