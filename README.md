@@ -11,7 +11,7 @@ Deployed on Google Compute Engine. Just need to send information to the Pub/Sub 
 ```
 function testProcess() {
     var data = {};
-    data.contactId = 4934182044172288;
+    data.publicationId = 6539064085839872;
     data.url = 'http://pagesix.com/author/cindy-adams/feed/';
     return getContent(data);
 };
@@ -22,7 +22,7 @@ Pub/Sub call:
 ```json
 {
     "url": "http://pagesix.com/author/cindy-adams/feed/",
-    "contactId": 4934182044172288
+    "publicationId": 6539064085839872
 }
 ```
 
