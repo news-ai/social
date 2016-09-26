@@ -49,6 +49,7 @@ function getTweetsFromUsername(username) {
         if (!error) {
             deferred.resolve(tweets);
         } else {
+            console.error(error);
             deferred.reject(new Error(error));
         }
     });
