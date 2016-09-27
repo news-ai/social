@@ -1,0 +1,14 @@
+{
+  "name": "instagram-feed",
+  "version": "0.0.1",
+  "description": "Get data from Instagram",
+  "main": "instagram.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "NewsAI",
+  "license": "ISC",
+  "dependencies": {
+    "request": "^2.75.0"
+  }
+}

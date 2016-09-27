@@ -80,7 +80,7 @@ function addToElastic(username, tweets) {
             index: {
                 _index: 'tweets',
                 _type: 'tweet',
-                _id: tweetsToAdd[i].Id
+                _id: tweetsToAdd[i].TweetId
             }
         };
         var dataRecord = tweetsToAdd[i];
