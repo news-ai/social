@@ -9,6 +9,7 @@
   "author": "NewsAI",
   "license": "ISC",
   "dependencies": {
+    "q": "^1.4.1",
     "request": "^2.75.0"
   }
 }
