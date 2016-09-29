@@ -57,6 +57,25 @@ function getTweetsFromUsername(username) {
     return deferred.promise;
 }
 
+function formatToFeed(tweet, username) {
+    return {
+        'CreatedDate': tweet.CreatedAt,
+        'Type': 'Tweet',
+
+        // Headlines
+        'Title': '',
+        'Url': '',
+        'Summary': '',
+        'FeedURL': '',
+        'PublicationId': 0,
+
+        // Tweet
+        'TweetId': tweet.TweetId,
+        'Text': tweet.Text,
+        'Username': username
+    };
+}
+
 // Add these tweets to ElasticSearch
 // username here is the base parent username.
 // Not just a username of any user.
@@ -85,6 +104,18 @@ function addToElastic(username, tweets) {
         };
         var dataRecord = tweetsToAdd[i];
         dataRecord.Username = username;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+
+        indexRecord = {
+            index: {
+                _index: 'feeds',
+                _type: 'feed'
+            }
+        };
+        dataRecord = formatToFeed(tweetsToAdd[i], username);
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord

@@ -28,7 +28,7 @@ function getInstagramFromUsername(access_token, username) {
 }
 
 // Process a particular Twitter user
-function processTwitterUser(data) {
+function processInstagramUser(data) {
     var deferred = Q.defer();
 
     // Get tweets for a user
@@ -51,7 +51,7 @@ var message = {
     }
 };
 
-processTwitterUser(message.data)
+processInstagramUser(message.data)
     .then(function(status) {
         console.log('Completed execution for ' + message.data.username);
     }, function(error) {
