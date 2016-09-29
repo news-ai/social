@@ -83,6 +83,25 @@ function getFeedFromUrl(url) {
     return deferred.promise;
 }
 
+function formatToFeed(headline, publicationId) {
+    return {
+        'CreatedAt': headline.PublishDate,
+        'Type': 'Headline',
+
+        // Headlines
+        'Title': headline.Title,
+        'Url': headline.Url,
+        'Summary': headline.Summary,
+        'FeedURL': headline.FeedURL,
+        'PublicationId': publicationId,
+
+        // Tweet
+        'TweetId': 0,
+        'Text': '',
+        'Username': ''
+    };
+}
+
 function addToElastic(publicationId, content) {
     var deferred = Q.defer();
 
@@ -97,6 +116,19 @@ function addToElastic(publicationId, content) {
         };
         var dataRecord = content[i];
         dataRecord.PublicationId = publicationId;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+
+        indexRecord = {
+            index: {
+                _index: 'feeds',
+                _type: 'feed',
+                _id: content[i].Url
+            }
+        };
+        dataRecord = formatToFeed(content[i], publicationId);
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord

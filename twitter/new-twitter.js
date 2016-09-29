@@ -95,6 +95,7 @@ function addToElastic(username, tweets) {
 
     var esActions = [];
     for (var i = tweetsToAdd.length - 1; i >= 0; i--) {
+        // Add to tweets endpoint
         var indexRecord = {
             index: {
                 _index: 'tweets',
@@ -109,10 +110,12 @@ function addToElastic(username, tweets) {
             data: dataRecord
         });
 
+        // Add to feeds endpoint
         indexRecord = {
             index: {
                 _index: 'feeds',
-                _type: 'feed'
+                _type: 'feed',
+                _id: tweetsToAdd[i].TweetId
             }
         };
         dataRecord = formatToFeed(tweetsToAdd[i], username);

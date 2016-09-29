@@ -69,7 +69,8 @@ function addTweetToEs(tweet, username) {
     indexRecord = {
         index: {
             _index: 'feeds',
-            _type: 'feed'
+            _type: 'feed',
+            _id: tweet.id
         }
     };
     dataRecord = formatToFeed(tweetToAdd, username);
