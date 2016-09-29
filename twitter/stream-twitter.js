@@ -21,6 +21,25 @@ var stream = new Stream({
 });
 stream.stream();
 
+function formatToFeed(tweet, username) {
+    return {
+        'CreatedAt': tweet.CreatedAt,
+        'Type': 'Tweet',
+
+        // Headlines
+        'Title': '',
+        'Url': '',
+        'Summary': '',
+        'FeedURL': '',
+        'PublicationId': 0,
+
+        // Tweet
+        'TweetId': tweet.TweetId,
+        'Text': tweet.Text,
+        'Username': username
+    };
+}
+
 function addTweetToEs(tweet, username) {
     var deferred = Q.defer();
 
@@ -42,6 +61,18 @@ function addTweetToEs(tweet, username) {
 
     var dataRecord = tweetToAdd;
     dataRecord.Username = username;
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
+    });
+
+    indexRecord = {
+        index: {
+            _index: 'feeds',
+            _type: 'feed'
+        }
+    };
+    dataRecord = formatToFeed(tweetToAdd, username);
     esActions.push(indexRecord);
     esActions.push({
         data: dataRecord
