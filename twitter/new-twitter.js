@@ -59,7 +59,7 @@ function getTweetsFromUsername(username) {
 
 function formatToFeed(tweet, username) {
     return {
-        'CreatedDate': tweet.CreatedAt,
+        'CreatedAt': tweet.CreatedAt,
         'Type': 'Tweet',
 
         // Headlines
