@@ -105,6 +105,10 @@ function formatToFeed(headline, publicationId) {
 function addToElastic(publicationId, content) {
     var deferred = Q.defer();
 
+    if (Object.prototype.toString.call(publicationId) === '[object String]') {
+        publicationId = parseInt(publicationId, 10);
+    }
+
     var esActions = [];
     for (var i = content.length - 1; i >= 0; i--) {
         var indexRecord = {
