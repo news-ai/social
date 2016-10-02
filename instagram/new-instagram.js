@@ -50,17 +50,52 @@ function formatToFeed(post, username) {
 function addToElastic(username, posts) {
     var deferred = Q.defer();
 
-    var instagramUser = posts.data[0].user;
-    var instagramData = [];
+    var user = posts.data[0].user;
+    var esActions = [];
 
     // Look through all the instagram data
     for (var i = posts.data.length - 1; i >= 0; i--) {
         delete posts.data[i].user;
-        posts.data[i].Username = username;
-        instagramData.push(posts.data[i]);
+
+        // Add to instagram endpoint
+        var indexRecord = {
+            index: {
+                _index: 'instagrams',
+                _type: 'instagram',
+                _id: posts.data[i].id
+            }
+        };
+        var dataRecord = posts.data[i];
+        dataRecord.Username = username;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
     }
 
-    console.log(instagramData[0]);
+    // Add user to ElasticSearch as well
+    var indexRecord = {
+        index: {
+            _index: 'instagrams',
+            _type: 'user',
+            _id: username
+        }
+    };
+    var dataRecord = user;
+    dataRecord.Username = username;
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
+    });
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            deferred.reject(error);
+        }
+        deferred.resolve(user);
+    });
 
     return deferred.promise;
 }
