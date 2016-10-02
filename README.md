@@ -44,6 +44,19 @@ Pub/Sub call:
 
 - `stream-twitter.js` doesn't need anything to run.
 
+### Instagram
+
+Pub/Sub call:
+
+- `new-instagram.js` takes Pub/Sub of `username`, and `access_token`.
+
+```json
+{
+    "access_token": "43004312.4314d27.3e8c7280a4ec49119e240d8cbaaa89c4",
+    "username": "abhiagarwal"
+}
+```
+
 ### Compute Engine
 
 `gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
