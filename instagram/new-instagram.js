@@ -39,7 +39,8 @@ function formatToFeed(post, username) {
         'Username': '',
 
         // Instagram
-        'InstagramId': post.InstagramId
+        'InstagramId': post.InstagramId,
+        'InstgramUsername': username
     };
 }
 
@@ -48,6 +49,18 @@ function formatToFeed(post, username) {
 // Not just a username of any user.
 function addToElastic(username, posts) {
     var deferred = Q.defer();
+
+    var instagramUser = posts.data[0].user;
+    var instagramData = [];
+
+    // Look through all the instagram data
+    for (var i = posts.data.length - 1; i >= 0; i--) {
+        delete posts.data[i].user;
+        posts.data[i].Username = username;
+        instagramData.push(posts.data[i]);
+    }
+
+    console.log(instagramData[0]);
 
     return deferred.promise;
 }
@@ -58,17 +71,7 @@ function getInstagramFromUsername(access_token, username) {
     request('https://api.instagram.com/v1/users/self/media/recent/?access_token=' + access_token, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramMedia = JSON.parse(body);
-            var instagramUser = instagramMedia.data[0].user;
-            var instagramData = [];
-
-            // Look through all the instagram data
-            for (var i = instagramMedia.data.length - 1; i >= 0; i--) {
-                delete instagramMedia.data[i].user;
-                instagramMedia.data[i].Username = username;
-                instagramData.push(instagramMedia.data[i]);
-            }
-
-            deferred.resolve(instagramData);
+            deferred.resolve(instagramMedia);
         } else {
             console.error(error);
             deferred.reject(new Error(error));
@@ -85,8 +88,16 @@ function processInstagramUser(data) {
     // Get tweets for a user
     getInstagramFromUsername(data.access_token, data.username).then(function(posts) {
         // Add instagram posts to elasticsearch
-        console.log(posts);
-
+        addToElastic(data.username, posts).then(function(status) {
+            if (status) {
+                deferred.resolve(status);
+            } else {
+                var error = 'Could not add instagram posts to ES';
+                deferred.reject(error);
+            }
+        }, function(error) {
+            deferred.reject(error);
+        });
     }, function(error) {
         deferred.reject(error);
     });

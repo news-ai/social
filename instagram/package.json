@@ -9,7 +9,12 @@
   "author": "NewsAI",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/datastore": "^0.1.1",
+    "elasticsearch": "^11.0.1",
+    "google-cloud": "^0.40.0",
+    "moment": "^2.15.1",
     "q": "^1.4.1",
-    "request": "^2.75.0"
+    "twitter": "^1.4.0",
+    "user-stream": "0.0.7"
   }
 }
