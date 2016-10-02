@@ -1,5 +1,56 @@
+'use strict';
+
 var Q = require('q');
 var request = require('request');
+var elasticsearch = require('elasticsearch');
+var moment = require('moment');
+var Twitter = require('twitter');
+var gcloud = require('google-cloud')({
+    projectId: 'newsai-1166'
+});
+
+// Instantiate a elasticsearch client
+var elasticSearchClient = new elasticsearch.Client({
+    host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
+    // log: 'trace',
+    rejectUnauthorized: false
+});
+
+// Initialize Google Cloud
+var topicName = 'process-instagram-feed';
+var subscriptionName = 'node-new-user-instagram';
+var pubsub = gcloud.pubsub();
+
+function formatToFeed(post, username) {
+    return {
+        'CreatedAt': post.CreatedAt,
+        'Type': 'Tweet',
+
+        // Headlines
+        'Title': '',
+        'Url': '',
+        'Summary': '',
+        'FeedURL': '',
+        'PublicationId': 0,
+
+        // Tweet
+        'TweetId': 0,
+        'Text': '',
+        'Username': '',
+
+        // Instagram
+        'InstagramId': post.InstagramId
+    };
+}
+
+// Add these instagram posts to ElasticSearch
+// username here is the base parent username.
+// Not just a username of any user.
+function addToElastic(username, posts) {
+    var deferred = Q.defer();
+
+    return deferred.promise;
+}
 
 function getInstagramFromUsername(access_token, username) {
     var deferred = Q.defer();
@@ -27,7 +78,7 @@ function getInstagramFromUsername(access_token, username) {
     return deferred.promise;
 }
 
-// Process a particular Twitter user
+// Process a particular Instagram user
 function processInstagramUser(data) {
     var deferred = Q.defer();
 
