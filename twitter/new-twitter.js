@@ -4,6 +4,7 @@ var elasticsearch = require('elasticsearch');
 var moment = require('moment');
 var Q = require('q');
 var Twitter = require('twitter');
+var raven = require('raven');
 var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
 });
@@ -20,6 +21,11 @@ var topicName = 'process-twitter-feed';
 var subscriptionName = 'node-new-user-twitter';
 var pubsub = gcloud.pubsub();
 
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://9fd2d37a95dc472496b018dd15be1369:195a98802d4f4440852aea96ebb65d2b@sentry.io/103128');
+client.patchGlobal();
+
+// Instantiate a twitter client
 var twitterClient = new Twitter({
     consumer_key: 'nu83S4GaW4vrsN6gPoTbSvuMy',
     consumer_secret: 't86zlLxN7mjwHu9OMflX806StaqSFWfLMTOiiFLmOuwI5kUFFE',
@@ -50,6 +56,7 @@ function getTweetsFromUsername(username) {
             deferred.resolve(tweets);
         } else {
             console.error(error);
+            client.captureMessage(error);
             deferred.reject(new Error(error));
         }
     });
@@ -144,6 +151,7 @@ function addToElastic(username, tweets) {
         body: esActions
     }, function(error, response) {
         if (error) {
+            client.captureMessage(error);
             deferred.reject(error);
         }
         deferred.resolve(user);
@@ -163,6 +171,7 @@ function followOnTwitter(user) {
         if (!error) {
             deferred.resolve(true);
         }
+        client.captureMessage(error);
         deferred.reject(error);
     });
 
@@ -183,16 +192,21 @@ function processTwitterUser(data) {
                 followOnTwitter(user).then(function(response) {
                     deferred.resolve(true);
                 }, function(error) {
+                    client.captureMessage(error);
                     deferred.reject(error);
                 });
             } else {
-                deferred.reject(new Error('Elasticsearch add failed'));
+                var error = new Error('Elasticsearch add failed');
+                client.captureMessage(error);
+                deferred.reject(error);
             }
         }, function(error) {
+            client.captureMessage(error);
             deferred.reject(error);
         });
 
     }, function(error) {
+        client.captureMessage(error);
         deferred.reject(error);
     });
 
@@ -209,6 +223,7 @@ function subscribe(cb) {
     }
 
     function handleError(err) {
+        client.captureMessage(err);
         console.error(err);
     }
 
@@ -251,6 +266,7 @@ function subscribe(cb) {
 subscribe(function(err, message) {
     // Any errors received are considered fatal.
     if (err) {
+        client.captureMessage(err);
         console.error(err);
         throw err;
     }
@@ -259,6 +275,7 @@ subscribe(function(err, message) {
         .then(function(status) {
             console.log('Completed execution for ' + message.data.username);
         }, function(error) {
+            client.captureMessage(error);
             console.error(error);
         });
 });
