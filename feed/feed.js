@@ -2,6 +2,7 @@
 
 var moment = require('moment');
 var Q = require('q');
+var raven = require('raven');
 var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
 });
@@ -12,6 +13,10 @@ var datastore = gcloud.datastore();
 // Initialize Google Cloud
 var pubsub = gcloud.pubsub();
 var topicName = 'process-rss-feed';
+
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://c69c2a293ace4f2194b24df6f8d9f865:c61da655d1274dc0aa4dd52bb7c36f3a@sentry.io/103130');
+sentryClient.patchGlobal();
 
 function getTopic(cb) {
     pubsub.createTopic(topicName, function(err, topic) {
@@ -30,6 +35,7 @@ function addFeedToPubSub(publicationId, url) {
         if (err) {
             deferred.reject(new Error(err));
             console.error('Error occurred while getting pubsub topic', err);
+            sentryClient.captureMessage(err);
         } else {
             topic.publish({
                 data: {
@@ -40,6 +46,7 @@ function addFeedToPubSub(publicationId, url) {
                 if (err) {
                     deferred.reject(new Error(err));
                     console.error('Error occurred while queuing background task', err);
+                    sentryClient.captureMessage(err);
                 } else {
                     deferred.resolve(true);
                     console.info('Feed ' + url + ' sent to ' + topicName + ' pubsub');
@@ -71,10 +78,12 @@ function getLatestFeeds() {
                     }, function(err) {
                         if (err) {
                             console.error(err);
+                            sentryClient.captureMessage(err);
                         }
                     });
                 }, function(error) {
                     console.error(error);
+                    sentryClient.captureMessage(error);
                 });
         });
     });

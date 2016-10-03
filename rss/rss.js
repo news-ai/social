@@ -21,6 +21,10 @@ var topicName = 'process-rss-feed';
 var subscriptionName = 'node-rss';
 var pubsub = gcloud.pubsub();
 
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://4db5dd699d4a4267ab6f56fa97a9ee5c:9240e5b57b864de58f514b6d40e7e5a7@sentry.io/103131');
+sentryClient.patchGlobal();
+
 // Get a Google Cloud topic
 function getTopic(cb) {
     pubsub.createTopic(topicName, function(err, topic) {
@@ -77,6 +81,7 @@ function getFeedFromUrl(url) {
         deferred.resolve(contents);
     }).catch(function(error) {
         deferred.reject(new Error(error));
+        sentryClient.captureMessage(error);
         throw new Error(error);
     });
 
@@ -144,6 +149,7 @@ function addToElastic(publicationId, content) {
     }, function(error, response) {
         if (error) {
             console.error(error);
+            sentryClient.captureMessage(error);
             deferred.resolve(false);
         }
         deferred.resolve(true);
@@ -164,16 +170,19 @@ function getContent(data) {
                     } else {
                         var error = 'Elasticsearch add failed';
                         console.error(error);
+                        sentryClient.captureMessage(error);
                         deferred.resolve(false);
                         throw new Error(error);
                     }
                 }, function(error) {
                     console.error(error);
+                    sentryClient.captureMessage(error);
                     deferred.resolve(false);
                     throw new Error(error);
                 });
         }, function(error) {
             console.error(error);
+            sentryClient.captureMessage(error);
             deferred.reject(new Error(error));
             throw new Error(error);
         });
@@ -191,10 +200,12 @@ function subscribe(cb) {
 
     function handleError(err) {
         console.error(err);
+        sentryClient.captureMessage(err);
     }
 
     getTopic(function(err, topic) {
         if (err) {
+            sentryClient.captureMessage(err);
             return cb(err);
         }
 
@@ -232,6 +243,7 @@ subscribe(function(err, message) {
     // Any errors received are considered fatal.
     if (err) {
         console.error(err);
+        sentryClient.captureMessage(err);
         throw err;
     }
     console.log('Received request to process rss feed ' + message.data.url);
@@ -240,5 +252,6 @@ subscribe(function(err, message) {
             console.log('Completed execution for ' + message.data.url);
         }, function(error) {
             console.error(error);
+            sentryClient.captureMessage(error);
         });
 });
