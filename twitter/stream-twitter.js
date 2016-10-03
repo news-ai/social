@@ -4,6 +4,7 @@ var elasticsearch = require('elasticsearch');
 var moment = require('moment');
 var Q = require('q');
 var Stream = require('user-stream');
+var raven = require('raven');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -11,6 +12,10 @@ var elasticSearchClient = new elasticsearch.Client({
     // log: 'trace',
     rejectUnauthorized: false
 });
+
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://9af56ecaeca547abb4aa9f1bed0626d9:8146296e132a4dd2808b0babdaebfc4c@sentry.io/103129');
+sentryClient.patchGlobal();
 
 // Initialize Twitter client and Twitter stream
 var stream = new Stream({
@@ -84,6 +89,7 @@ function addTweetToEs(tweet, username) {
     }, function(error, response) {
         if (error) {
             console.error(error);
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         }
         deferred.resolve(true);
@@ -104,10 +110,12 @@ function findUsernameFromTwitterId(twitterId) {
         } else {
             var error = 'Did not get any hits';
             console.error(error);
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         }
     }, function(error) {
         console.error(error);
+        sentryClient.captureMessage(error);
         deferred.reject(error);
     });
 
@@ -125,19 +133,23 @@ function processTweet(tweet) {
                 } else {
                     var error = 'Elasticsearch add failed';
                     console.error(error);
+                    sentryClient.captureMessage(error);
                     deferred.reject(error);
                 }
             }, function(error) {
                 console.error(error);
+                sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
         }, function(error) {
             console.error(error);
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         });
     } else {
         var error = 'Not supporting removing tweets yet';
         console.error(error);
+        sentryClient.captureMessage(error);
         deferred.reject(error);
     }
 
@@ -152,6 +164,7 @@ stream.on('data', function(tweet) {
             console.log(response);
         }, function (error) {
             console.error(error);
+            sentryClient.captureMessage(error);
         });
     }
 });
