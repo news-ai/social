@@ -115,46 +115,51 @@ function addToElastic(publicationId, content) {
         publicationId = parseInt(publicationId, 10);
     }
 
-    var esActions = [];
-    for (var i = content.length - 1; i >= 0; i--) {
-        var indexRecord = {
-            index: {
-                _index: 'headlines',
-                _type: 'headline',
-                _id: content[i].Url
-            }
-        };
-        var dataRecord = content[i];
-        dataRecord.PublicationId = publicationId;
-        esActions.push(indexRecord);
-        esActions.push({
-            data: dataRecord
-        });
+    // If content length is zero then resolve right away
+    if (content.length === 0) {
+        deferred.resolve(true);
+    } else {
+        var esActions = [];
+        for (var i = content.length - 1; i >= 0; i--) {
+            var indexRecord = {
+                index: {
+                    _index: 'headlines',
+                    _type: 'headline',
+                    _id: content[i].Url
+                }
+            };
+            var dataRecord = content[i];
+            dataRecord.PublicationId = publicationId;
+            esActions.push(indexRecord);
+            esActions.push({
+                data: dataRecord
+            });
 
-        indexRecord = {
-            index: {
-                _index: 'feeds',
-                _type: 'feed',
-                _id: content[i].Url
+            indexRecord = {
+                index: {
+                    _index: 'feeds',
+                    _type: 'feed',
+                    _id: content[i].Url
+                }
+            };
+            dataRecord = formatToFeed(content[i], publicationId);
+            esActions.push(indexRecord);
+            esActions.push({
+                data: dataRecord
+            });
+        }
+
+        client.bulk({
+            body: esActions
+        }, function(error, response) {
+            if (error) {
+                console.error(error);
+                sentryClient.captureMessage(error);
+                deferred.resolve(false);
             }
-        };
-        dataRecord = formatToFeed(content[i], publicationId);
-        esActions.push(indexRecord);
-        esActions.push({
-            data: dataRecord
+            deferred.resolve(true);
         });
     }
-
-    client.bulk({
-        body: esActions
-    }, function(error, response) {
-        if (error) {
-            console.error(error);
-            sentryClient.captureMessage(error);
-            deferred.resolve(false);
-        }
-        deferred.resolve(true);
-    });
 
     return deferred.promise;
 }
