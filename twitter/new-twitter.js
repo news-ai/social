@@ -23,7 +23,7 @@ var pubsub = gcloud.pubsub();
 
 // Instantiate a sentry client
 var sentryClient = new raven.Client('https://9fd2d37a95dc472496b018dd15be1369:195a98802d4f4440852aea96ebb65d2b@sentry.io/103128');
-client.patchGlobal();
+sentryClient.patchGlobal();
 
 // Instantiate a twitter client
 var twitterClient = new Twitter({
@@ -56,7 +56,7 @@ function getTweetsFromUsername(username) {
             deferred.resolve(tweets);
         } else {
             console.error(error);
-            client.captureMessage(error);
+            sentryClient.captureMessage(error);
             deferred.reject(new Error(error));
         }
     });
@@ -151,7 +151,7 @@ function addToElastic(username, tweets) {
         body: esActions
     }, function(error, response) {
         if (error) {
-            client.captureMessage(error);
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         }
         deferred.resolve(user);
@@ -171,7 +171,7 @@ function followOnTwitter(user) {
         if (!error) {
             deferred.resolve(true);
         }
-        client.captureMessage(error);
+        sentryClient.captureMessage(error);
         deferred.reject(error);
     });
 
@@ -192,21 +192,21 @@ function processTwitterUser(data) {
                 followOnTwitter(user).then(function(response) {
                     deferred.resolve(true);
                 }, function(error) {
-                    client.captureMessage(error);
+                    sentryClient.captureMessage(error);
                     deferred.reject(error);
                 });
             } else {
                 var error = new Error('Elasticsearch add failed');
-                client.captureMessage(error);
+                sentryClient.captureMessage(error);
                 deferred.reject(error);
             }
         }, function(error) {
-            client.captureMessage(error);
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         });
 
     }, function(error) {
-        client.captureMessage(error);
+        sentryClient.captureMessage(error);
         deferred.reject(error);
     });
 
@@ -223,7 +223,7 @@ function subscribe(cb) {
     }
 
     function handleError(err) {
-        client.captureMessage(err);
+        sentryClient.captureMessage(err);
         console.error(err);
     }
 
@@ -266,7 +266,7 @@ function subscribe(cb) {
 subscribe(function(err, message) {
     // Any errors received are considered fatal.
     if (err) {
-        client.captureMessage(err);
+        sentryClient.captureMessage(err);
         console.error(err);
         throw err;
     }
@@ -275,7 +275,7 @@ subscribe(function(err, message) {
         .then(function(status) {
             console.log('Completed execution for ' + message.data.username);
         }, function(error) {
-            client.captureMessage(error);
+            sentryClient.captureMessage(error);
             console.error(error);
         });
 });
