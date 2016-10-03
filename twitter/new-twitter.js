@@ -96,7 +96,7 @@ function addToElastic(username, tweets) {
     for (var i = tweets.length - 1; i >= 0; i--) {
         tweetsToAdd.push({
             'TweetId': tweets[i].id,
-            'TweetIdStr': tweet.id_str,
+            'TweetIdStr': tweets[i].id_str,
             'Text': tweets[i].text,
             'CreatedAt': moment(tweets[i].created_at).format('YYYY-MM-DDTHH:mm:ss') // damn you Twitter and your dates
         });
