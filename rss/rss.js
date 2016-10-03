@@ -4,6 +4,7 @@ var moment = require('moment');
 var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
+var raven = require('raven');
 var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
 });
