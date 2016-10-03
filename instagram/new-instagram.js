@@ -5,6 +5,7 @@ var request = require('request');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
 var Twitter = require('twitter');
+var raven = require('raven');
 var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
 });
@@ -20,6 +21,10 @@ var elasticSearchClient = new elasticsearch.Client({
 var topicName = 'process-instagram-feed';
 var subscriptionName = 'node-new-user-instagram';
 var pubsub = gcloud.pubsub();
+
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://4db5dd699d4a4267ab6f56fa97a9ee5c:9240e5b57b864de58f514b6d40e7e5a7@sentry.io/103131');
+sentryClient.patchGlobal();
 
 // Get a Google Cloud topic
 function getTopic(cb) {
@@ -102,6 +107,7 @@ function addToElastic(username, posts) {
         body: esActions
     }, function(error, response) {
         if (error) {
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         }
         deferred.resolve(user);
@@ -119,6 +125,7 @@ function getInstagramFromUsername(access_token, username) {
             deferred.resolve(instagramMedia);
         } else {
             console.error(error);
+            sentryClient.captureMessage(error);
             deferred.reject(new Error(error));
         }
     })
@@ -137,13 +144,16 @@ function processInstagramUser(data) {
             if (status) {
                 deferred.resolve(status);
             } else {
-                var error = 'Could not add instagram posts to ES';
+                var error = 'Could not add instagram posts to ES'
+                sentryClient.captureMessage(error);
                 deferred.reject(error);
             }
         }, function(error) {
+            sentryClient.captureMessage(error);
             deferred.reject(error);
         });
     }, function(error) {
+        sentryClient.captureMessage(error);
         deferred.reject(error);
     });
 
@@ -161,6 +171,7 @@ function subscribe(cb) {
 
     function handleError(err) {
         console.error(err);
+        sentryClient.captureMessage(err);
     }
 
     getTopic(function(err, topic) {
@@ -203,6 +214,7 @@ subscribe(function(err, message) {
     // Any errors received are considered fatal.
     if (err) {
         console.error(err);
+        sentryClient.captureMessage(err);
         throw err;
     }
     console.log('Received request to process twitter feed ' + message.data.username);
@@ -211,6 +223,7 @@ subscribe(function(err, message) {
             console.log('Completed execution for ' + message.data.username);
         }, function(error) {
             console.error(error);
+            sentryClient.captureMessage(error);
         });
 });
 
