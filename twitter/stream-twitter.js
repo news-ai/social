@@ -146,11 +146,6 @@ function processTweet(tweet) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    } else {
-        var error = 'Not supporting removing tweets yet';
-        console.error(error);
-        sentryClient.captureMessage(error);
-        deferred.reject(error);
     }
 
     return deferred.promise;
