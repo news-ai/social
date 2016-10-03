@@ -46,12 +46,11 @@ function formatToFeed(post, username) {
 
         // Tweet
         'TweetId': 0,
-        'Text': '',
-        'Username': '',
+        'Text': post.caption.text,
+        'Username': username,
 
         // Instagram
-        'InstagramId': post.InstagramId,
-        'InstgramUsername': username
+        'InstagramId': post.InstagramId
     };
 }
 
