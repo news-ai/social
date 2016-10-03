@@ -40,8 +40,9 @@ function formatToFeed(tweet, username) {
 
         // Tweet
         'TweetId': tweet.TweetId,
+        'TweetIdStr': tweet.TweetIdStr,
         'Text': tweet.Text,
-        'Username': username
+        'Username': username,
     };
 }
 
@@ -52,6 +53,7 @@ function addTweetToEs(tweet, username) {
 
     var tweetToAdd = {
         'TweetId': tweet.id,
+        'TweetIdStr': tweet.id_str,
         'Text': tweet.text,
         'CreatedAt': moment(tweet.created_at).format('YYYY-MM-DDTHH:mm:ss')
     };
