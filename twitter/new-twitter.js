@@ -168,11 +168,11 @@ function followOnTwitter(user) {
         user_id: user.id,
         follow: true
     }, function(error, response) {
-        if (!error) {
-            deferred.resolve(true);
+        if (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);   
         }
-        sentryClient.captureMessage(error);
-        deferred.reject(error);
+        deferred.resolve(true);
     });
 
     return deferred.promise;
