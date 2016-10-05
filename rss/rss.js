@@ -56,8 +56,8 @@ function getFeedFromUrl(url) {
             if (!item.author) {
                 item.author = "";
             }
-            if (!item.permalink) {
-                item.permalink = "";
+            if (!item.link) {
+                item.link = "";
             }
             if (!item.categories) {
                 item.categories = [];
@@ -71,7 +71,7 @@ function getFeedFromUrl(url) {
             var content = {
                 Title: item.title,
                 Author: item.author,
-                Url: item.permalink,
+                Url: item.link,
                 Categories: item.categories,
                 PublishDate: item.pubDate,
                 Summary: item.summary,
