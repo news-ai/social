@@ -54,7 +54,7 @@ function formatToFeed(post, username) {
         'Username': '',
 
         // Tweet + Instagram
-        'Text': post.caption.text,
+        'Text': post.Caption,
 
         // Instagram
         'InstagramUsername': username,
@@ -114,6 +114,20 @@ function addToElastic(username, posts) {
         };
         var dataRecord = newInstagramPost;
         dataRecord.Username = username;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+
+        // Add to feeds endpoint
+        indexRecord = {
+            index: {
+                _index: 'feeds',
+                _type: 'feed',
+                _id: posts.data[i].id
+            }
+        };
+        dataRecord = formatToFeed(newInstagramPost, username);
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord
@@ -262,7 +276,7 @@ subscribe(function(err, message) {
 // // Code for testing the functions above
 // var message = {
 //     data: {
-//         access_token: '',
+//         access_token: '43004312.4314d27.3e8c7280a4ec49119e240d8cbaaa89c4',
 //         username: 'abhiagarwal'
 //     }
 // };
