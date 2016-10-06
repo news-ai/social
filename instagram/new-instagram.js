@@ -51,17 +51,19 @@ function formatToFeed(post, username) {
 
         // Tweet
         'TweetId': 0,
+        'Username': '',
 
         // Tweet + Instagram
         'Text': post.caption.text,
-        'Username': '',
 
         // Instagram
         'InstagramUsername': username,
         'InstagramId': post.InstagramId,
-        'InstagramImage': post.images && post.images.standard_resolution && post.images.standard_resolution.url,
-        'InstagramVideo': post.videos && post.videos.standard_resolution && post.videos.standard_resolution.url,
-        'InstagramLink': post.InstagramLink
+        'InstagramImage': post.Image,
+        'InstagramVideo': post.Video,
+        'InstagramLink': post.Link,
+        'InstagramLikes': post.Likes,
+        'InstagramComments': post.Comments
     };
 }
 
@@ -76,10 +78,31 @@ function addToElastic(username, posts) {
 
     // Look through all the instagram data
     for (var i = posts.data.length - 1; i >= 0; i--) {
-        delete posts.data[i].user;
-        delete posts.data[i].attribution;
-        posts.data[i].CreatedAt = moment.unix(parseInt(posts.data[i].created_time,10)).format('YYYY-MM-DDTHH:mm:ss');
-        delete posts.data[i].created_time;
+        var newInstagramPost = {};
+
+        newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time,10)).format('YYYY-MM-DDTHH:mm:ss');
+        newInstagramPost.Video = posts.data[i].videos && posts.data[i].videos.standard_resolution && posts.data[i].videos.standard_resolution.url || '';
+        newInstagramPost.Image = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.url || '';
+        newInstagramPost.Location = posts.data[i].location && posts.data[i].location.name || '';
+
+        var coordinates = '';
+        if (posts.data[i].location && posts.data[i].location.latitude && posts.data[i].location.longitude) {
+            coordinates = posts.data[i].location.latitude.toString() + ',' + posts.data[i].location.longitude.toString();
+        }
+
+        newInstagramPost.Coordinates = coordinates;
+        newInstagramPost.InstagramId = posts.data[i].id || '';
+        newInstagramPost.Caption = posts.data[i].caption && posts.data[i].caption.text || '';
+        newInstagramPost.Likes = posts.data[i].likes && posts.data[i].likes.count || 0;
+        newInstagramPost.Comments = posts.data[i].comments && posts.data[i].comments.count || 0;
+        newInstagramPost.Link = posts.data[i].link || '';
+
+        var tags = [];
+        if (posts.data[i].tags && posts.data[i].tags.length > 0) {
+            tags = posts.data[i].tags;
+        }
+
+        newInstagramPost.Tags = tags;
 
         // Add to instagram endpoint
         var indexRecord = {
@@ -89,7 +112,7 @@ function addToElastic(username, posts) {
                 _id: posts.data[i].id
             }
         };
-        var dataRecord = posts.data[i];
+        var dataRecord = newInstagramPost;
         dataRecord.Username = username;
         esActions.push(indexRecord);
         esActions.push({
