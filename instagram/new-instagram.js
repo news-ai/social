@@ -40,7 +40,7 @@ function getTopic(cb) {
 function formatToFeed(post, username) {
     return {
         'CreatedAt': post.CreatedAt,
-        'Type': 'Tweet',
+        'Type': 'Instagram',
 
         // Headlines
         'Title': '',
@@ -51,11 +51,17 @@ function formatToFeed(post, username) {
 
         // Tweet
         'TweetId': 0,
+
+        // Tweet + Instagram
         'Text': post.caption.text,
-        'Username': username,
+        'Username': '',
 
         // Instagram
-        'InstagramId': post.InstagramId
+        'InstagramUsername': username,
+        'InstagramId': post.InstagramId,
+        'InstagramImage': post.images && post.images.standard_resolution && post.images.standard_resolution.url,
+        'InstagramVideo': post.videos && post.videos.standard_resolution && post.videos.standard_resolution.url,
+        'InstagramLink': post.InstagramLink
     };
 }
 
@@ -71,6 +77,9 @@ function addToElastic(username, posts) {
     // Look through all the instagram data
     for (var i = posts.data.length - 1; i >= 0; i--) {
         delete posts.data[i].user;
+        delete posts.data[i].attribution;
+        posts.data[i].CreatedAt = moment.unix(parseInt(posts.data[i].created_time,10)).format('YYYY-MM-DDTHH:mm:ss');
+        delete posts.data[i].created_time;
 
         // Add to instagram endpoint
         var indexRecord = {
