@@ -312,7 +312,7 @@ function subscribe(cb) {
     };
 }
 
-Begin subscription
+// Begin subscription
 subscribe(function(err, message) {
     // Any errors received are considered fatal.
     if (err) {
