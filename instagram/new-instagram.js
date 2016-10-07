@@ -69,7 +69,7 @@ function formatToFeed(post, username) {
 // Add these instagram posts to ElasticSearch
 // username here is the base parent username.
 // Not just a username of any user.
-function addToElastic(username, posts) {
+function addToElastic(username, posts, profile) {
     var deferred = Q.defer();
 
     var esActions = [];
@@ -131,9 +131,7 @@ function addToElastic(username, posts) {
         });
     }
 
-    if (esActions.length > 0) {
-        var user = posts.data[0].user;
-
+    if (profile && profile.data) {
         // Add user to ElasticSearch as well
         var indexRecord = {
             index: {
@@ -142,15 +140,15 @@ function addToElastic(username, posts) {
                 _id: username
             }
         };
-        var dataRecord = user;
+        var dataRecord = profile.data;
         dataRecord.Username = username;
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord
         });
+    }
 
-        console.log(esActions);
-
+    if (esActions.length > 0) {
         elasticSearchClient.bulk({
             body: esActions
         }, function(error, response) {
@@ -158,7 +156,7 @@ function addToElastic(username, posts) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             }
-            deferred.resolve(user);
+            deferred.resolve(true);
         });
     } else {
         var error = 'Nothing was added to ES for username ' + username;
@@ -193,6 +191,23 @@ function getInstagramIdFromUsername(username) {
     return deferred.promise;
 }
 
+function getInstagramProfileFromUsername(access_token, username, userid) {
+    var deferred = Q.defer();
+
+    request('https://api.instagram.com/v1/users/' + userid + '/?access_token=' + access_token, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var instagramProfile = JSON.parse(body);
+            deferred.resolve(instagramProfile);
+        } else {
+            console.error(body);
+            sentryClient.captureMessage(body);
+            deferred.reject(new Error(body));
+        }
+    })
+
+    return deferred.promise;
+}
+
 function getInstagramFromUsername(access_token, username) {
     var deferred = Q.defer();
 
@@ -200,7 +215,7 @@ function getInstagramFromUsername(access_token, username) {
         request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + access_token, function(error, response, body) {
             if (!error && response.statusCode == 200) {
                 var instagramMedia = JSON.parse(body);
-                deferred.resolve(instagramMedia);
+                deferred.resolve([userid, instagramMedia]);
             } else {
                 console.error(body);
                 sentryClient.captureMessage(body);
@@ -221,17 +236,22 @@ function processInstagramUser(data) {
     var deferred = Q.defer();
 
     // Get tweets for a user
-    getInstagramFromUsername(data.access_token, data.username).then(function(posts) {
+    getInstagramFromUsername(data.access_token, data.username).then(function(instagramIdAndPosts) {
         // Add instagram posts to elasticsearch
-        addToElastic(data.username, posts).then(function(status) {
-            if (status) {
-                deferred.resolve(status);
-            } else {
-                var error = 'Could not add instagram posts to ES'
+        getInstagramProfileFromUsername(data.access_token, data.username, instagramIdAndPosts[0]).then(function(profile) {
+            addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
+                if (status) {
+                    deferred.resolve(status);
+                } else {
+                    var error = 'Could not add instagram posts to ES'
+                    sentryClient.captureMessage(error);
+                    deferred.reject(error);
+                }
+            }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
-            }
-        }, function(error) {
+            });
+        }, function (error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
