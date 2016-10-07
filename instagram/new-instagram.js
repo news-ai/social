@@ -72,9 +72,7 @@ function formatToFeed(post, username) {
 function addToElastic(username, posts) {
     var deferred = Q.defer();
 
-    var user = posts.data[0].user;
     var esActions = [];
-
     // Look through all the instagram data
     for (var i = posts.data.length - 1; i >= 0; i--) {
         var newInstagramPost = {};
@@ -133,22 +131,26 @@ function addToElastic(username, posts) {
         });
     }
 
-    // Add user to ElasticSearch as well
-    var indexRecord = {
-        index: {
-            _index: 'instagrams',
-            _type: 'user',
-            _id: username
-        }
-    };
-    var dataRecord = user;
-    dataRecord.Username = username;
-    esActions.push(indexRecord);
-    esActions.push({
-        data: dataRecord
-    });
-
     if (esActions.length > 0) {
+        var user = posts.data[0].user;
+
+        // Add user to ElasticSearch as well
+        var indexRecord = {
+            index: {
+                _index: 'instagrams',
+                _type: 'user',
+                _id: username
+            }
+        };
+        var dataRecord = user;
+        dataRecord.Username = username;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+
+        console.log(esActions);
+
         elasticSearchClient.bulk({
             body: esActions
         }, function(error, response) {
@@ -311,8 +313,8 @@ function subscribe(cb) {
 // Code for testing the functions above
 var message = {
     data: {
-        access_token: '43004312.4314d27.3e8c7280a4ec49119e240d8cbaaa89c4',
-        username: 'abhiagarwal'
+        access_token: '4012932218.4314d27.9d8c7984a50d41c096c0841bccc4c468',
+        username: 'newsaiorg'
     }
 };
 
