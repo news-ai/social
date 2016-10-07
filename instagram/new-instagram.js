@@ -312,35 +312,35 @@ function subscribe(cb) {
     };
 }
 
-// Begin subscription
-// subscribe(function(err, message) {
-//     // Any errors received are considered fatal.
-//     if (err) {
-//         console.error(err);
-//         sentryClient.captureMessage(err);
-//         throw err;
-//     }
-//     console.log('Received request to process instagram feed ' + message.data.username);
-//     processInstagramUser(message.data)
-//         .then(function(status) {
-//             console.log('Completed execution for ' + message.data.username);
-//         }, function(error) {
-//             console.error(error);
-//             sentryClient.captureMessage(error);
-//         });
-// });
-
-// Code for testing the functions above
-var message = {
-    data: {
-        access_token: '4012932218.4314d27.9d8c7984a50d41c096c0841bccc4c468',
-        username: 'newsaiorg'
+Begin subscription
+subscribe(function(err, message) {
+    // Any errors received are considered fatal.
+    if (err) {
+        console.error(err);
+        sentryClient.captureMessage(err);
+        throw err;
     }
-};
+    console.log('Received request to process instagram feed ' + message.data.username);
+    processInstagramUser(message.data)
+        .then(function(status) {
+            console.log('Completed execution for ' + message.data.username);
+        }, function(error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+        });
+});
 
-processInstagramUser(message.data)
-    .then(function(status) {
-        console.log('Completed execution for ' + message.data.username);
-    }, function(error) {
-        console.error(error);
-    });
+// // Code for testing the functions above
+// var message = {
+//     data: {
+//         access_token: '',
+//         username: 'abhiagarwal'
+//     }
+// };
+
+// processInstagramUser(message.data)
+//     .then(function(status) {
+//         console.log('Completed execution for ' + message.data.username);
+//     }, function(error) {
+//         console.error(error);
+//     });
