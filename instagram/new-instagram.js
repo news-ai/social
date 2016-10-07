@@ -4,7 +4,6 @@ var Q = require('q');
 var request = require('request');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
-var Twitter = require('twitter');
 var raven = require('raven');
 var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
@@ -80,7 +79,7 @@ function addToElastic(username, posts) {
     for (var i = posts.data.length - 1; i >= 0; i--) {
         var newInstagramPost = {};
 
-        newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time,10)).format('YYYY-MM-DDTHH:mm:ss');
+        newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss');
         newInstagramPost.Video = posts.data[i].videos && posts.data[i].videos.standard_resolution && posts.data[i].videos.standard_resolution.url || '';
         newInstagramPost.Image = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.url || '';
         newInstagramPost.Location = posts.data[i].location && posts.data[i].location.name || '';
@@ -149,14 +148,44 @@ function addToElastic(username, posts) {
         data: dataRecord
     });
 
-    elasticSearchClient.bulk({
-        body: esActions
-    }, function(error, response) {
-        if (error) {
+    if (esActions.length > 0) {
+        elasticSearchClient.bulk({
+            body: esActions
+        }, function(error, response) {
+            if (error) {
+                sentryClient.captureMessage(error);
+                deferred.reject(error);
+            }
+            deferred.resolve(user);
+        });
+    } else {
+        var error = 'Nothing was added to ES for username ' + username;
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
+    }
+
+    return deferred.promise;
+}
+
+function getInstagramIdFromUsername(username) {
+    var deferred = Q.defer();
+
+    request('https://www.instagram.com/' + username + '/?__a=1', function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var userProfile = JSON.parse(body);
+            if (userProfile.user && userProfile.user.id) {
+                deferred.resolve(userProfile.user.id);
+            } else {
+                var error = 'Could not find Instagram Id';
+                console.error(error);
+                sentryClient.captureMessage(error);
+                deferred.reject(new Error(error));
+            }
+        } else {
+            console.error(error);
             sentryClient.captureMessage(error);
-            deferred.reject(error);
+            deferred.reject(new Error(error));
         }
-        deferred.resolve(user);
     });
 
     return deferred.promise;
@@ -165,16 +194,22 @@ function addToElastic(username, posts) {
 function getInstagramFromUsername(access_token, username) {
     var deferred = Q.defer();
 
-    request('https://api.instagram.com/v1/users/self/media/recent/?access_token=' + access_token, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            var instagramMedia = JSON.parse(body);
-            deferred.resolve(instagramMedia);
-        } else {
-            console.error(error);
-            sentryClient.captureMessage(error);
-            deferred.reject(new Error(error));
-        }
-    })
+    getInstagramIdFromUsername(username).then(function(userid) {
+        request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + access_token, function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                var instagramMedia = JSON.parse(body);
+                deferred.resolve(instagramMedia);
+            } else {
+                console.error(body);
+                sentryClient.captureMessage(body);
+                deferred.reject(new Error(body));
+            }
+        })
+    }, function(error) {
+        console.error(error);
+        sentryClient.captureMessage(error);
+        deferred.reject(new Error(error));
+    });
 
     return deferred.promise;
 }
@@ -256,34 +291,34 @@ function subscribe(cb) {
 }
 
 // Begin subscription
-subscribe(function(err, message) {
-    // Any errors received are considered fatal.
-    if (err) {
-        console.error(err);
-        sentryClient.captureMessage(err);
-        throw err;
-    }
-    console.log('Received request to process twitter feed ' + message.data.username);
-    processInstagramUser(message.data)
-        .then(function(status) {
-            console.log('Completed execution for ' + message.data.username);
-        }, function(error) {
-            console.error(error);
-            sentryClient.captureMessage(error);
-        });
-});
-
-// // Code for testing the functions above
-// var message = {
-//     data: {
-//         access_token: '43004312.4314d27.3e8c7280a4ec49119e240d8cbaaa89c4',
-//         username: 'abhiagarwal'
+// subscribe(function(err, message) {
+//     // Any errors received are considered fatal.
+//     if (err) {
+//         console.error(err);
+//         sentryClient.captureMessage(err);
+//         throw err;
 //     }
-// };
+//     console.log('Received request to process instagram feed ' + message.data.username);
+//     processInstagramUser(message.data)
+//         .then(function(status) {
+//             console.log('Completed execution for ' + message.data.username);
+//         }, function(error) {
+//             console.error(error);
+//             sentryClient.captureMessage(error);
+//         });
+// });
 
-// processInstagramUser(message.data)
-//     .then(function(status) {
-//         console.log('Completed execution for ' + message.data.username);
-//     }, function(error) {
-//         console.error(error);
-//     });
+// Code for testing the functions above
+var message = {
+    data: {
+        access_token: '43004312.4314d27.3e8c7280a4ec49119e240d8cbaaa89c4',
+        username: 'abhiagarwal'
+    }
+};
+
+processInstagramUser(message.data)
+    .then(function(status) {
+        console.log('Completed execution for ' + message.data.username);
+    }, function(error) {
+        console.error(error);
+    });

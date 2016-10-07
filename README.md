@@ -28,7 +28,10 @@ Pub/Sub call:
 
 ### Feeds
 
-Deployed on Google Compute Engine. Will run periodically to check any feed that needs to get fetched. The input is data from the datastore, and the output is a pub/sub call to `process-rss-feed` with `username`.
+Deployed on Google Compute Engine. Will run periodically to check any feed that needs to get fetched. The input is data from the datastore, and the output is a pub/sub call to `process-rss-feed` with `username`. 2 functions:
+
+1. Get initial data for Twitter user and 20 posts (new)
+2. Get new tweets as they come in (stream)
 
 ### Twitter
 
@@ -46,16 +49,25 @@ Pub/Sub call:
 
 ### Instagram
 
+3 functions:
+
+1. Get initial data for Instagram user and posts (new)
+2. Repeatedly keep the data up to date (sync)
+3. Get new posts as they come out (incoming)
+
 Pub/Sub call:
 
 - `new-instagram.js` takes Pub/Sub of `username`, and `access_token`.
 
 ```json
 {
-    "access_token": "43004312.4314d27.3e8c7280a4ec49119e240d8cbaaa89c4",
+    "access_token": "",
     "username": "abhiagarwal"
 }
 ```
+
+- `sync-posts.js`
+- `stream-instagram.js`
 
 ### Compute Engine
 
