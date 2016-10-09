@@ -153,6 +153,11 @@ function processTweet(tweet) {
     return deferred.promise;
 }
 
+// Error checking
+stream.on('connected', function(error) {
+    console.log('Connected to stream');
+});
+
 // Incoming tweet for a particular user - add to ElasticSearch
 stream.on('data', function(tweet) {
     console.log(tweet.id);
@@ -164,4 +169,10 @@ stream.on('data', function(tweet) {
             sentryClient.captureMessage(error);
         });
     }
+});
+
+// Error checking
+stream.on('close', function(error) {
+    // Restart stream
+    stream.stream();
 });
