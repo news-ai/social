@@ -153,6 +153,16 @@ function processTweet(tweet) {
     return deferred.promise;
 }
 
+/**
+ * Events:
+ * - data
+ * - garbage
+ * - close
+ * - error
+ * - connected
+ * - heartbeat
+ */
+
 // Error checking
 stream.on('connected', function(error) {
     console.log('Connected to stream');
@@ -171,8 +181,21 @@ stream.on('data', function(tweet) {
     }
 });
 
+// Garbage
+stream.on('garbage', function(data) {
+    // Restart stream
+    console.log('[GARBAGE]: ' + data);
+});
+
 // Error checking
+stream.on('error', function(error) {
+    // Restart stream
+    console.log('[ERROR]: ' + error);
+});
+
+// Error checking - restart stream
 stream.on('close', function(error) {
     // Restart stream
+    console.log('[STREAM CLOSED]: ' + error);
     stream.stream();
 });
