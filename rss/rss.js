@@ -1,6 +1,7 @@
 'use strict';
 
 var moment = require('moment');
+var rp = require('request-promise');
 var feedparser = require('feedparser-promised');
 var elasticsearch = require('elasticsearch');
 var Q = require('q');
@@ -255,7 +256,13 @@ subscribe(function(err, message) {
     console.log('Received request to process rss feed ' + message.data.url);
     getContent(message.data)
         .then(function(status) {
-            console.log('Completed execution for ' + message.data.url);
+            rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
+                .then(function (htmlString) {
+                    console.log('Completed execution for ' + message.data.url);
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
         }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
