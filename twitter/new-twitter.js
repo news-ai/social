@@ -1,7 +1,7 @@
 'use strict';
 
 var elasticsearch = require('elasticsearch');
-var http = require('http');
+var rp = require('request-promise');
 var moment = require('moment');
 var Q = require('q');
 var Twitter = require('twitter');
@@ -276,8 +276,13 @@ subscribe(function(err, message) {
     console.log('Received request to process twitter feed ' + message.data.username);
     processTwitterUser(message.data)
         .then(function(status) {
-            http.get("https://hchk.io/1a7203c6-1716-4933-bdc0-673c4cd2d7bd");
-            console.log('Completed execution for ' + message.data.username);
+            rp('https://hchk.io/1a7203c6-1716-4933-bdc0-673c4cd2d7bd')
+                .then(function (htmlString) {
+                    console.log('Completed execution for ' + message.data.username);
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
