@@ -1,6 +1,7 @@
 'use strict';
 
 var elasticsearch = require('elasticsearch');
+var http = require('http');
 var moment = require('moment');
 var Q = require('q');
 var Stream = require('user-stream');
@@ -173,6 +174,7 @@ stream.on('data', function(tweet) {
     console.log(tweet.id);
     if (!tweet.friends) {
         processTweet(tweet).then(function (response) {
+            http.get("https://hchk.io/73a12c55-c81f-4f0e-b0fe-cc0e26c18cd7");
             console.log(response);
         }, function (error) {
             console.error(error);
