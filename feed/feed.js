@@ -1,6 +1,7 @@
 'use strict';
 
 var moment = require('moment');
+var rp = require('request-promise');
 var Q = require('q');
 var raven = require('raven');
 var gcloud = require('google-cloud')({
@@ -81,14 +82,6 @@ function getLatestFeeds() {
                             sentryClient.captureMessage(err);
                         }
                     });
-
-                    rp('https://hchk.io/57057b83-2bf9-454d-ad35-547b6db86d81')
-                        .then(function (htmlString) {
-                            console.log('Completed execution');
-                        })
-                        .catch(function (err) {
-                            console.error(err);
-                        });
                 }, function(error) {
                     console.error(error);
                     sentryClient.captureMessage(error);
@@ -106,6 +99,14 @@ function runFeeds() {
     setInterval(function() {
         console.log('Processing feeds');
         getLatestFeeds();
+
+        rp('https://hchk.io/57057b83-2bf9-454d-ad35-547b6db86d81')
+            .then(function (htmlString) {
+                console.log('Completed execution');
+            })
+            .catch(function (err) {
+                console.error(err);
+            });
     }, 15 * 60 * 1000);
 }
 
