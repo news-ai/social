@@ -1,6 +1,7 @@
 'use strict';
 
 var elasticsearch = require('elasticsearch');
+var http = require('http');
 var moment = require('moment');
 var Q = require('q');
 var Twitter = require('twitter');
@@ -275,6 +276,7 @@ subscribe(function(err, message) {
     console.log('Received request to process twitter feed ' + message.data.username);
     processTwitterUser(message.data)
         .then(function(status) {
+            http.get("https://hchk.io/1a7203c6-1716-4933-bdc0-673c4cd2d7bd");
             console.log('Completed execution for ' + message.data.username);
         }, function(error) {
             sentryClient.captureMessage(error);
