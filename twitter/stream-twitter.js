@@ -191,11 +191,13 @@ stream.on('garbage', function(data) {
 stream.on('error', function(error) {
     // Restart stream
     console.log('[ERROR]: ' + error);
+    sentryClient.captureMessage('[ERROR]: ' + error);
 });
 
 // Error checking - restart stream
 stream.on('close', function(error) {
     // Restart stream
     console.log('[STREAM CLOSED]: ' + error);
+    sentryClient.captureMessage('[STREAM CLOSED]: ' + error);
     stream.stream();
 });
