@@ -176,12 +176,11 @@ stream.on('data', function(tweet) {
         processTweet(tweet).then(function (response) {
             rp('https://hchk.io/73a12c55-c81f-4f0e-b0fe-cc0e26c18cd7')
                 .then(function (htmlString) {
-                    console.log('Completed execution for ' + message.data.username);
+                    console.log(response);
                 })
                 .catch(function (err) {
                     console.error(err);
                 });
-            console.log(response);
         }, function (error) {
             console.error(error);
             sentryClient.captureMessage(error);
