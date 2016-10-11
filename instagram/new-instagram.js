@@ -211,35 +211,22 @@ function getInstagramProfileFromUsername(data, userid) {
 function getInstagramFromUsername(data) {
     var deferred = Q.defer();
 
-    if (data.access_token !== '') {
-        getInstagramIdFromUsername(data.username).then(function(userid) {
-            request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + data.access_token, function(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    var instagramMedia = JSON.parse(body);
-                    deferred.resolve([userid, instagramMedia]);
-                } else {
-                    console.error(body);
-                    sentryClient.captureMessage(body);
-                    deferred.reject(new Error(body));
-                }
-            })
-        }, function(error) {
-            console.error(error);
-            sentryClient.captureMessage(error);
-            deferred.reject(new Error(error));
-        });
-    } else {
-        request('https://www.instagram.com/' + data.username +'/?__a=1', function(error, response, body) {
+    getInstagramIdFromUsername(data.username).then(function(userid) {
+        request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + data.access_token, function(error, response, body) {
             if (!error && response.statusCode == 200) {
                 var instagramMedia = JSON.parse(body);
-                deferred.resolve(['', instagramMedia]);
+                deferred.resolve([userid, instagramMedia]);
             } else {
                 console.error(body);
                 sentryClient.captureMessage(body);
                 deferred.reject(new Error(body));
             }
         })
-    }
+    }, function(error) {
+        console.error(error);
+        sentryClient.captureMessage(error);
+        deferred.reject(new Error(error));
+    });
 
     return deferred.promise;
 }
@@ -248,30 +235,35 @@ function getInstagramFromUsername(data) {
 function processInstagramUser(data) {
     var deferred = Q.defer();
 
-    // Get tweets for a user
-    getInstagramFromUsername(data).then(function(instagramIdAndPosts) {
-        // Add instagram posts to elasticsearch
-        getInstagramProfileFromUsername(data, instagramIdAndPosts[0]).then(function(profile) {
-            addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
-                if (status) {
-                    deferred.resolve(status);
-                } else {
-                    var error = 'Could not add instagram posts to ES'
+    if (data.access_token !== '') {
+        // Get instagram post for a user
+        getInstagramFromUsername(data).then(function(instagramIdAndPosts) {
+            // Get instagram profile for a user
+            getInstagramProfileFromUsername(data, instagramIdAndPosts[0]).then(function(profile) {
+                // Add instagram posts to elasticsearch
+                addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
+                    if (status) {
+                        deferred.resolve(status);
+                    } else {
+                        var error = 'Could not add instagram posts to ES'
+                        sentryClient.captureMessage(error);
+                        deferred.reject(error);
+                    }
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
-                }
-            }, function(error) {
+                });
+            }, function (error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    }, function(error) {
-        sentryClient.captureMessage(error);
-        deferred.reject(error);
-    });
+    } else {
+
+    }
 
     return deferred.promise;
 }
