@@ -191,7 +191,7 @@ function getInstagramIdFromUsername(username) {
     return deferred.promise;
 }
 
-function getInstagramProfileFromUsername(data, userid) {
+function getInstagramProfileFromUsernameWithAccessToken(data, userid) {
     var deferred = Q.defer();
 
     request('https://api.instagram.com/v1/users/' + userid + '/?access_token=' + data.access_token, function(error, response, body) {
@@ -208,7 +208,7 @@ function getInstagramProfileFromUsername(data, userid) {
     return deferred.promise;
 }
 
-function getInstagramFromUsername(data) {
+function getInstagramFromUsernameWithAccessToken(data) {
     var deferred = Q.defer();
 
     getInstagramIdFromUsername(data.username).then(function(userid) {
@@ -231,15 +231,73 @@ function getInstagramFromUsername(data) {
     return deferred.promise;
 }
 
+function getInstagramFromPostId(postId) {
+    var deferred = Q.defer();
+
+    request('https://www.instagram.com/p/' + postId + '/?__a=1', function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var instagramPost = JSON.parse(body);
+            var instagramMedia = instagramMedia.media;
+            deferred.resolve(instagramMedia);
+        } else {
+            console.error(body);
+            sentryClient.captureMessage(body);
+            deferred.reject(new Error(body));
+        }
+    })
+
+    return deferred.promise;
+}
+
+function getInstagramFromNodes(media) {
+    var deferred = Q.defer();
+
+    for (var i = media.nodes.length - 1; i >= 0; i--) {
+        getInstagramFromPostId(media.nodes[i].code)
+    }
+
+    return deferred.promise;
+}
+
+function getInstagramFromUsernameWithoutAccessToken(data) {
+    var deferred = Q.defer();
+
+    request('https://www.instagram.com/' + data.username +'/?__a=1', function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var instagramMedia = JSON.parse(body);
+            var instagramUser = instagramMedia.user;
+
+            // If the set user is private
+            if (instagramUser && instagramUser.is_private) {
+
+            }
+
+            if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {
+                getInstagramFromNodes(instagramUser.media)
+            } else {
+                // If there is no count
+            }
+
+            deferred.resolve([userid, instagramMedia]);
+        } else {
+            console.error(body);
+            sentryClient.captureMessage(body);
+            deferred.reject(new Error(body));
+        }
+    })
+
+    return deferred.promise;
+}
+
 // Process a particular Instagram user
 function processInstagramUser(data) {
     var deferred = Q.defer();
 
     if (data.access_token !== '') {
         // Get instagram post for a user
-        getInstagramFromUsername(data).then(function(instagramIdAndPosts) {
+        getInstagramFromUsernameWithAccessToken(data).then(function(instagramIdAndPosts) {
             // Get instagram profile for a user
-            getInstagramProfileFromUsername(data, instagramIdAndPosts[0]).then(function(profile) {
+            getInstagramProfileFromUsernameWithAccessToken(data, instagramIdAndPosts[0]).then(function(profile) {
                 // Add instagram posts to elasticsearch
                 addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
                     if (status) {
@@ -262,7 +320,14 @@ function processInstagramUser(data) {
             deferred.reject(error);
         });
     } else {
-
+        // If there is no access_token passed into the process
+        getInstagramFromUsernameWithoutAccessToken(data).then(function(instagramIdAndPosts) {
+           
+            
+        }, function(error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        });
     }
 
     return deferred.promise;
