@@ -237,7 +237,7 @@ function getInstagramFromPostId(postId) {
     request('https://www.instagram.com/p/' + postId + '/?__a=1', function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramPost = JSON.parse(body);
-            var instagramMedia = instagramMedia.media;
+            var instagramMedia = instagramPost.media;
             deferred.resolve(instagramMedia);
         } else {
             console.error(body);
@@ -250,13 +250,12 @@ function getInstagramFromPostId(postId) {
 }
 
 function getInstagramFromNodes(media) {
-    var deferred = Q.defer();
-
+    var allPromises = [];
     for (var i = media.nodes.length - 1; i >= 0; i--) {
-        getInstagramFromPostId(media.nodes[i].code)
+        var toExecute = getInstagramFromPostId(media.nodes[i].code);
+        allPromises.push(toExecute);
     }
-
-    return deferred.promise;
+    return Q.all(allPromises);
 }
 
 function getInstagramFromUsernameWithoutAccessToken(data) {
@@ -269,22 +268,29 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
 
             // If the set user is private
             if (instagramUser && instagramUser.is_private) {
-
-            }
-
-            if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {
-                getInstagramFromNodes(instagramUser.media)
+                deferred.resolve([instagramUser, []]);
             } else {
-                // If there is no count
+                // If it not private
+                if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {
+                    // Get all their content
+                    getInstagramFromNodes(instagramUser.media).then(function (responses) {
+                        deferred.resolve([instagramUser, responses]);
+                    }, function (error) {
+                        console.error(error);
+                        sentryClient.captureMessage(error);
+                        deferred.reject(new Error(error));
+                    });
+                } else {
+                    // If the count is empty
+                    deferred.resolve([instagramUser, []]);
+                }
             }
-
-            deferred.resolve([userid, instagramMedia]);
         } else {
             console.error(body);
             sentryClient.captureMessage(body);
             deferred.reject(new Error(body));
         }
-    })
+    });
 
     return deferred.promise;
 }
@@ -321,9 +327,8 @@ function processInstagramUser(data) {
         });
     } else {
         // If there is no access_token passed into the process
-        getInstagramFromUsernameWithoutAccessToken(data).then(function(instagramIdAndPosts) {
-           
-            
+        getInstagramFromUsernameWithoutAccessToken(data).then(function(instagramUserAndPosts) {
+           console.log(instagramUserAndPosts[0], instagramUserAndPosts[1]);
         }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
@@ -382,35 +387,35 @@ function subscribe(cb) {
     };
 }
 
-// Begin subscription
-subscribe(function(err, message) {
-    // Any errors received are considered fatal.
-    if (err) {
-        console.error(err);
-        sentryClient.captureMessage(err);
-        throw err;
-    }
-    console.log('Received request to process instagram feed ' + message.data.username);
-    processInstagramUser(message.data)
-        .then(function(status) {
-            console.log('Completed execution for ' + message.data.username);
-        }, function(error) {
-            console.error(error);
-            sentryClient.captureMessage(error);
-        });
-});
-
-// // Code for testing the functions above
-// var message = {
-//     data: {
-//         access_token: '',
-//         username: 'abhiagarwal'
+// // Begin subscription
+// subscribe(function(err, message) {
+//     // Any errors received are considered fatal.
+//     if (err) {
+//         console.error(err);
+//         sentryClient.captureMessage(err);
+//         throw err;
 //     }
-// };
+//     console.log('Received request to process instagram feed ' + message.data.username);
+//     processInstagramUser(message.data)
+//         .then(function(status) {
+//             console.log('Completed execution for ' + message.data.username);
+//         }, function(error) {
+//             console.error(error);
+//             sentryClient.captureMessage(error);
+//         });
+// });
 
-// processInstagramUser(message.data)
-//     .then(function(status) {
-//         console.log('Completed execution for ' + message.data.username);
-//     }, function(error) {
-//         console.error(error);
-//     });
+// Code for testing the functions above
+var message = {
+    data: {
+        access_token: '',
+        username: 'coolbeancool'
+    }
+};
+
+processInstagramUser(message.data)
+    .then(function(status) {
+        console.log('Completed execution for ' + message.data.username);
+    }, function(error) {
+        console.error(error);
+    });
