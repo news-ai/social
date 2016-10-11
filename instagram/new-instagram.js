@@ -324,7 +324,7 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
     var posts = [];
     for (var i = instagramPosts.length - 1; i >= 0; i--) {
         var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
-        var tags = instagramPosts[i].caption.match(/#[a-z]+/gi);
+        var tags = instagramPosts[i].caption && instagramPosts[i].caption.match(/#[a-z]+/gi) || [];
 
         var post = {
             'CreatedAt': moment.unix(parseInt(instagramPosts[i].date, 10)).format('YYYY-MM-DDTHH:mm:ss'),
