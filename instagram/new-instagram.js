@@ -309,17 +309,17 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
 
     var user = {
         'data': {
-            'username': instagramUser.username,
-            'bio': instagramUser.biography,
-            'website': instagramUser.external_url,
-            'profile_picture': instagramUser.profile_pic_url,
-            'full_name': instagramUser.full_name,
+            'username': instagramUser.username || '',
+            'bio': instagramUser.biography || '',
+            'website': instagramUser.external_url || '',
+            'profile_picture': instagramUser.profile_pic_url || '',
+            'full_name': instagramUser.full_name || '',
             'counts': {
-                'media': instagramUser.media.count,
-                'followed_by': instagramUser.followed_by && instagramUser.followed_by.count,
-                'follows': instagramUser.follows && instagramUser.follows.count
+                'media': instagramUser.media.count || 0,
+                'followed_by': instagramUser.followed_by && instagramUser.followed_by.count || 0,
+                'follows': instagramUser.follows && instagramUser.follows.count || 0
             },
-            'id': instagramUser.id
+            'id': instagramUser.id || ''
         }
     };
 
