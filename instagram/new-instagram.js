@@ -69,7 +69,7 @@ function formatToFeed(post, username) {
 // Add these instagram posts to ElasticSearch
 // username here is the base parent username.
 // Not just a username of any user.
-function addToElastic(username, posts, profile) {
+function addToElastic(username, posts, profile, isFormatted) {
     var deferred = Q.defer();
 
     var esActions = [];
@@ -77,29 +77,34 @@ function addToElastic(username, posts, profile) {
     for (var i = posts.data.length - 1; i >= 0; i--) {
         var newInstagramPost = {};
 
-        newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss');
-        newInstagramPost.Video = posts.data[i].videos && posts.data[i].videos.standard_resolution && posts.data[i].videos.standard_resolution.url || '';
-        newInstagramPost.Image = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.url || '';
-        newInstagramPost.Location = posts.data[i].location && posts.data[i].location.name || '';
+        if (!isFormatted) {
+            newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss');
+            newInstagramPost.Video = posts.data[i].videos && posts.data[i].videos.standard_resolution && posts.data[i].videos.standard_resolution.url || '';
+            newInstagramPost.Image = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.url || '';
+            newInstagramPost.Location = posts.data[i].location && posts.data[i].location.name || '';
 
-        var coordinates = '';
-        if (posts.data[i].location && posts.data[i].location.latitude && posts.data[i].location.longitude) {
-            coordinates = posts.data[i].location.latitude.toString() + ',' + posts.data[i].location.longitude.toString();
+            var coordinates = '';
+            if (posts.data[i].location && posts.data[i].location.latitude && posts.data[i].location.longitude) {
+                coordinates = posts.data[i].location.latitude.toString() + ',' + posts.data[i].location.longitude.toString();
+            }
+
+            newInstagramPost.Coordinates = coordinates;
+            newInstagramPost.InstagramId = posts.data[i].id || '';
+            newInstagramPost.Caption = posts.data[i].caption && posts.data[i].caption.text || '';
+            newInstagramPost.Likes = posts.data[i].likes && posts.data[i].likes.count || 0;
+            newInstagramPost.Comments = posts.data[i].comments && posts.data[i].comments.count || 0;
+            newInstagramPost.Link = posts.data[i].link || '';
+
+            var tags = [];
+            if (posts.data[i].tags && posts.data[i].tags.length > 0) {
+                tags = posts.data[i].tags;
+            }
+
+            newInstagramPost.Tags = tags;
+        } else {
+            newInstagramPost = posts.data[i];
+            delete newInstagramPost.id
         }
-
-        newInstagramPost.Coordinates = coordinates;
-        newInstagramPost.InstagramId = posts.data[i].id || '';
-        newInstagramPost.Caption = posts.data[i].caption && posts.data[i].caption.text || '';
-        newInstagramPost.Likes = posts.data[i].likes && posts.data[i].likes.count || 0;
-        newInstagramPost.Comments = posts.data[i].comments && posts.data[i].comments.count || 0;
-        newInstagramPost.Link = posts.data[i].link || '';
-
-        var tags = [];
-        if (posts.data[i].tags && posts.data[i].tags.length > 0) {
-            tags = posts.data[i].tags;
-        }
-
-        newInstagramPost.Tags = tags;
 
         // Add to instagram endpoint
         var indexRecord = {
@@ -261,7 +266,7 @@ function getInstagramFromNodes(media) {
 function getInstagramFromUsernameWithoutAccessToken(data) {
     var deferred = Q.defer();
 
-    request('https://www.instagram.com/' + data.username +'/?__a=1', function(error, response, body) {
+    request('https://www.instagram.com/' + data.username + '/?__a=1', function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramMedia = JSON.parse(body);
             var instagramUser = instagramMedia.user;
@@ -273,9 +278,9 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                 // If it not private
                 if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {
                     // Get all their content
-                    getInstagramFromNodes(instagramUser.media).then(function (responses) {
+                    getInstagramFromNodes(instagramUser.media).then(function(responses) {
                         deferred.resolve([instagramUser, responses]);
-                    }, function (error) {
+                    }, function(error) {
                         console.error(error);
                         sentryClient.captureMessage(error);
                         deferred.reject(new Error(error));
@@ -295,6 +300,56 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
     return deferred.promise;
 }
 
+function formatInstagramUserAndPosts(instagramUserAndPosts) {
+    var instagramUser = instagramUserAndPosts[0];
+    var instagramPosts = instagramUserAndPosts[1];
+
+    var user = {
+        'data': {
+            'username': instagramUser.username,
+            'bio': instagramUser.biography,
+            'website': instagramUser.external_url,
+            'profile_picture': instagramUser.profile_pic_url,
+            'full_name': instagramUser.full_name,
+            'counts': {
+                'media': instagramUser.media.count,
+                'followed_by': instagramUser.followed_by && instagramUser.followed_by.count,
+                'follows': instagramUser.follows && instagramUser.follows.count
+            },
+            'id': instagramUser.id
+        }
+    };
+
+    var posts = [];
+    for (var i = instagramPosts.length - 1; i >= 0; i--) {
+        var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
+        var tags = instagramPosts[i].caption.match(/#[a-z]+/gi);
+
+        var post = {
+            'CreatedAt': moment.unix(parseInt(instagramPosts[i].date, 10)).format('YYYY-MM-DDTHH:mm:ss'),
+            'Video': instagramPosts[i].video_url || '',
+            'Image': instagramPosts[i].display_src || '',
+            'Location': instagramPosts[i].location && instagramPosts[i].location.name || '',
+            'Coordinates': '',
+            'InstagramId': instagramId || '',
+            'Caption': instagramPosts[i].caption || '',
+            'Likes': instagramPosts[i].likes && instagramPosts[i].likes.count || 0,
+            'Comments': instagramPosts[i].comments && instagramPosts[i].comments.count || 0,
+            'Link': 'https://www.instagram.com/p/' + instagramPosts[i].code + '/' || '',
+            'Tags': tags || [],
+            'id': instagramId || ''
+        };
+        console.log(post);
+        posts.push(post);
+    }
+
+    posts = {
+        'data': posts
+    };
+
+    return [user, posts];
+}
+
 // Process a particular Instagram user
 function processInstagramUser(data) {
     var deferred = Q.defer();
@@ -305,7 +360,7 @@ function processInstagramUser(data) {
             // Get instagram profile for a user
             getInstagramProfileFromUsernameWithAccessToken(data, instagramIdAndPosts[0]).then(function(profile) {
                 // Add instagram posts to elasticsearch
-                addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
+                addToElastic(data.username, instagramIdAndPosts[1], profile, false).then(function(status) {
                     if (status) {
                         deferred.resolve(status);
                     } else {
@@ -317,7 +372,7 @@ function processInstagramUser(data) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
                 });
-            }, function (error) {
+            }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
@@ -328,7 +383,21 @@ function processInstagramUser(data) {
     } else {
         // If there is no access_token passed into the process
         getInstagramFromUsernameWithoutAccessToken(data).then(function(instagramUserAndPosts) {
-           console.log(instagramUserAndPosts[0], instagramUserAndPosts[1]);
+            instagramUserAndPosts = formatInstagramUserAndPosts(instagramUserAndPosts);
+            console.log(instagramUserAndPosts);
+            // Add instagram posts to elasticsearch
+            // addToElastic(data.username, instagramUserAndPosts[1], instagramUserAndPosts[0], true).then(function(status) {
+            //     if (status) {
+            //         deferred.resolve(status);
+            //     } else {
+            //         var error = 'Could not add instagram posts to ES'
+            //         sentryClient.captureMessage(error);
+            //         deferred.reject(error);
+            //     }
+            // }, function(error) {
+            //     sentryClient.captureMessage(error);
+            //     deferred.reject(error);
+            // });
         }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
