@@ -235,30 +235,32 @@ function getInstagramFromUsername(access_token, username) {
 function processInstagramUser(data) {
     var deferred = Q.defer();
 
-    // Get tweets for a user
-    getInstagramFromUsername(data.access_token, data.username).then(function(instagramIdAndPosts) {
-        // Add instagram posts to elasticsearch
-        getInstagramProfileFromUsername(data.access_token, data.username, instagramIdAndPosts[0]).then(function(profile) {
-            addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
-                if (status) {
-                    deferred.resolve(status);
-                } else {
-                    var error = 'Could not add instagram posts to ES'
+    // Get instagram posts for a user
+    if (data.access_token) {
+        getInstagramFromUsername(data.access_token, data.username).then(function(instagramIdAndPosts) {
+            // Add instagram posts to elasticsearch
+            getInstagramProfileFromUsername(data.access_token, data.username, instagramIdAndPosts[0]).then(function(profile) {
+                addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
+                    if (status) {
+                        deferred.resolve(status);
+                    } else {
+                        var error = 'Could not add instagram posts to ES'
+                        sentryClient.captureMessage(error);
+                        deferred.reject(error);
+                    }
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
-                }
-            }, function(error) {
+                });
+            }, function (error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    }, function(error) {
-        sentryClient.captureMessage(error);
-        deferred.reject(error);
-    });
+        }
 
     return deferred.promise;
 }
