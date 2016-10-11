@@ -76,6 +76,7 @@ function addToElastic(username, posts, profile, isFormatted) {
     // Look through all the instagram data
     for (var i = posts.data.length - 1; i >= 0; i--) {
         var newInstagramPost = {};
+        var newInstagramPostId = posts.data[i].id;
 
         if (!isFormatted) {
             newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss');
@@ -103,7 +104,7 @@ function addToElastic(username, posts, profile, isFormatted) {
             newInstagramPost.Tags = tags;
         } else {
             newInstagramPost = posts.data[i];
-            delete newInstagramPost.id
+            delete newInstagramPost.id;
         }
 
         // Add to instagram endpoint
@@ -111,7 +112,7 @@ function addToElastic(username, posts, profile, isFormatted) {
             index: {
                 _index: 'instagrams',
                 _type: 'instagram',
-                _id: posts.data[i].id
+                _id: newInstagramPostId
             }
         };
         var dataRecord = newInstagramPost;
@@ -126,7 +127,7 @@ function addToElastic(username, posts, profile, isFormatted) {
             index: {
                 _index: 'feeds',
                 _type: 'feed',
-                _id: posts.data[i].id
+                _id: newInstagramPostId
             }
         };
         dataRecord = formatToFeed(newInstagramPost, username);
@@ -152,6 +153,8 @@ function addToElastic(username, posts, profile, isFormatted) {
             data: dataRecord
         });
     }
+
+    console.log(esActions);
 
     if (esActions.length > 0) {
         elasticSearchClient.bulk({
@@ -339,7 +342,6 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
             'Tags': tags || [],
             'id': instagramId || ''
         };
-        console.log(post);
         posts.push(post);
     }
 
@@ -384,20 +386,19 @@ function processInstagramUser(data) {
         // If there is no access_token passed into the process
         getInstagramFromUsernameWithoutAccessToken(data).then(function(instagramUserAndPosts) {
             instagramUserAndPosts = formatInstagramUserAndPosts(instagramUserAndPosts);
-            console.log(instagramUserAndPosts);
             // Add instagram posts to elasticsearch
-            // addToElastic(data.username, instagramUserAndPosts[1], instagramUserAndPosts[0], true).then(function(status) {
-            //     if (status) {
-            //         deferred.resolve(status);
-            //     } else {
-            //         var error = 'Could not add instagram posts to ES'
-            //         sentryClient.captureMessage(error);
-            //         deferred.reject(error);
-            //     }
-            // }, function(error) {
-            //     sentryClient.captureMessage(error);
-            //     deferred.reject(error);
-            // });
+            addToElastic(data.username, instagramUserAndPosts[1], instagramUserAndPosts[0], true).then(function(status) {
+                if (status) {
+                    deferred.resolve(status);
+                } else {
+                    var error = 'Could not add instagram posts to ES'
+                    sentryClient.captureMessage(error);
+                    deferred.reject(error);
+                }
+            }, function(error) {
+                sentryClient.captureMessage(error);
+                deferred.reject(error);
+            });
         }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
