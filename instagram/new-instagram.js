@@ -154,8 +154,6 @@ function addToElastic(username, posts, profile, isFormatted) {
         });
     }
 
-    console.log(esActions);
-
     if (esActions.length > 0) {
         elasticSearchClient.bulk({
             body: esActions
