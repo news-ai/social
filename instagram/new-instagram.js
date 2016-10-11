@@ -292,8 +292,10 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                 }
             }
         } else {
+            console.error(error);
+            console.error(response.statusCode);
             console.error(body);
-            sentryClient.captureMessage(body);
+            // sentryClient.captureMessage(body);
             deferred.reject(new Error(body));
         }
     });
