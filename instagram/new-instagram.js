@@ -191,10 +191,10 @@ function getInstagramIdFromUsername(username) {
     return deferred.promise;
 }
 
-function getInstagramProfileFromUsername(access_token, username, userid) {
+function getInstagramProfileFromUsername(data, userid) {
     var deferred = Q.defer();
 
-    request('https://api.instagram.com/v1/users/' + userid + '/?access_token=' + access_token, function(error, response, body) {
+    request('https://api.instagram.com/v1/users/' + userid + '/?access_token=' + data.access_token, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramProfile = JSON.parse(body);
             deferred.resolve(instagramProfile);
@@ -208,25 +208,38 @@ function getInstagramProfileFromUsername(access_token, username, userid) {
     return deferred.promise;
 }
 
-function getInstagramFromUsername(access_token, username) {
+function getInstagramFromUsername(data) {
     var deferred = Q.defer();
 
-    getInstagramIdFromUsername(username).then(function(userid) {
-        request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + access_token, function(error, response, body) {
+    if (data.access_token !== '') {
+        getInstagramIdFromUsername(data.username).then(function(userid) {
+            request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + data.access_token, function(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    var instagramMedia = JSON.parse(body);
+                    deferred.resolve([userid, instagramMedia]);
+                } else {
+                    console.error(body);
+                    sentryClient.captureMessage(body);
+                    deferred.reject(new Error(body));
+                }
+            })
+        }, function(error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.reject(new Error(error));
+        });
+    } else {
+        request('https://www.instagram.com/' + data.username +'/?__a=1', function(error, response, body) {
             if (!error && response.statusCode == 200) {
                 var instagramMedia = JSON.parse(body);
-                deferred.resolve([userid, instagramMedia]);
+                deferred.resolve(['', instagramMedia]);
             } else {
                 console.error(body);
                 sentryClient.captureMessage(body);
                 deferred.reject(new Error(body));
             }
         })
-    }, function(error) {
-        console.error(error);
-        sentryClient.captureMessage(error);
-        deferred.reject(new Error(error));
-    });
+    }
 
     return deferred.promise;
 }
@@ -235,32 +248,30 @@ function getInstagramFromUsername(access_token, username) {
 function processInstagramUser(data) {
     var deferred = Q.defer();
 
-    // Get instagram posts for a user
-    if (data.access_token) {
-        getInstagramFromUsername(data.access_token, data.username).then(function(instagramIdAndPosts) {
-            // Add instagram posts to elasticsearch
-            getInstagramProfileFromUsername(data.access_token, data.username, instagramIdAndPosts[0]).then(function(profile) {
-                addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
-                    if (status) {
-                        deferred.resolve(status);
-                    } else {
-                        var error = 'Could not add instagram posts to ES'
-                        sentryClient.captureMessage(error);
-                        deferred.reject(error);
-                    }
-                }, function(error) {
+    // Get tweets for a user
+    getInstagramFromUsername(data).then(function(instagramIdAndPosts) {
+        // Add instagram posts to elasticsearch
+        getInstagramProfileFromUsername(data, instagramIdAndPosts[0]).then(function(profile) {
+            addToElastic(data.username, instagramIdAndPosts[1], profile).then(function(status) {
+                if (status) {
+                    deferred.resolve(status);
+                } else {
+                    var error = 'Could not add instagram posts to ES'
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
-                });
-            }, function (error) {
+                }
+            }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
-        }, function(error) {
+        }, function (error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-        }
+    }, function(error) {
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
+    });
 
     return deferred.promise;
 }
