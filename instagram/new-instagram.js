@@ -36,6 +36,37 @@ function getTopic(cb) {
     });
 }
 
+function addFeedToPubSub(instagramUser) {
+    var deferred = Q.defer();
+
+    getTopic(function(err, topic) {
+        if (err) {
+            deferred.reject(new Error(err));
+            console.error('Error occurred while getting pubsub topic', err);
+            sentryClient.captureMessage(err);
+        } else {
+            topic.publish({
+                data: {
+                    username: instagramUser,
+                    access_token: '',
+                    depth: 1
+                }
+            }, function(err) {
+                if (err) {
+                    deferred.reject(new Error(err));
+                    console.error('Error occurred while queuing background task', err);
+                    sentryClient.captureMessage(err);
+                } else {
+                    deferred.resolve(true);
+                    console.info('Instagram user ' + instagramUser + ' sent to ' + topicName + ' pubsub');
+                }
+            });
+        }
+    });
+
+    return deferred.promise;
+}
+
 function formatToFeed(post, username) {
     return {
         'CreatedAt': post.CreatedAt,
@@ -292,10 +323,27 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                 }
             }
         } else {
-            console.error(error);
-            console.error(response.statusCode);
-            sentryClient.captureMessage(body);
-            deferred.reject(new Error(body));
+            if (!('depth' in data)) {
+                addFeedToPubSub(data.username).then(function (status) {
+                    if (status) {
+                        var error = 'Error occured, but sent another pubsub';
+                        sentryClient.captureMessage(error);
+                        deferred.reject(new Error(error));
+                    } else {
+                        var error = 'Error occured, but could not send another pubsub';
+                        sentryClient.captureMessage(error);
+                        deferred.reject(new Error(error));
+                    }
+                }, function (error) {
+                    sentryClient.captureMessage(error);
+                    deferred.reject(new Error(error));
+                });
+            } else {
+                console.error(error);
+                console.error(response.statusCode);
+                sentryClient.captureMessage(body);
+                deferred.reject(new Error(body));
+            }
         }
     });
 
