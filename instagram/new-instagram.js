@@ -291,7 +291,7 @@ function getInstagramFromPostId(postId) {
             sentryClient.captureMessage(body);
             deferred.reject(new Error(body));
         }
-    })
+    });
 
     return deferred.promise;
 }
@@ -320,7 +320,31 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
 
             // If the set user is private
             if (instagramUser && instagramUser.is_private) {
-                deferred.resolve([instagramUser, []]);
+                var apiData = {
+                    'network': 'Instagram',
+                    'username': data.username,
+                    'privateorinvalid': 'Private'
+                };
+
+                // Set the user to be private
+                request({
+                    url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
+                    method: 'POST',
+                    json: apiData,
+                    auth: {
+                        user: 'jebqsdFMddjuwZpgFrRo',
+                        password: ''
+                      }
+                }, function(error, response, body) {
+                    if (!error && response.statusCode == 200) {
+                        deferred.resolve([instagramUser, []]);
+                    } else {
+                        console.error(error);
+                        console.error(body);
+                        sentryClient.captureMessage(body);
+                        deferred.reject(new Error(body));
+                    }
+                });
             } else {
                 // If it not private
                 if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {

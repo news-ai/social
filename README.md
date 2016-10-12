@@ -59,7 +59,7 @@ Pub/Sub call:
 
 Pub/Sub call:
 
-- `new-instagram.js` takes Pub/Sub of `username`, and `access_token`.
+- `new-instagram.js` takes Pub/Sub of `username`, and `access_token`. Sometimes it passes in `depth`.
 
 ```json
 {
@@ -68,7 +68,7 @@ Pub/Sub call:
 }
 ```
 
-- `sync-posts.js`
+- `sync-posts.js` does not take any arguments. It reads from `/instagrams/instagram/_search` on ES.
 - `stream-instagram.js`
 
 ### Compute Engine
