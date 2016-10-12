@@ -310,7 +310,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
 
     request({
         url: 'https://www.instagram.com/' + data.username + '/?__a=1',
-        maxAttempts: 5,
+        maxAttempts: 3,
         retryDelay: 3000,
         retryStrategy: PageNotFound
     }, function(error, response, body) {
@@ -380,12 +380,33 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                 });
             } else {
                 // Invalidate the Instagram User here before sending the error
+                var apiData = {
+                    'network': 'Instagram',
+                    'username': data.username,
+                    'privateorinvalid': 'Invalid'
+                };
 
-                // If user name is not invalid then shit went down
-                console.error(error);
-                console.error(response.statusCode);
-                sentryClient.captureMessage(body);
-                deferred.reject(new Error(body));
+                // Set the user to be invalid
+                request({
+                    url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
+                    method: 'POST',
+                    json: apiData,
+                    auth: {
+                        user: 'jebqsdFMddjuwZpgFrRo',
+                        password: ''
+                      }
+                }, function(error, response, body) {
+                    if (!error && response.statusCode == 200) {
+                        console.log('User sent to be invalid');
+                        deferred.resolve([instagramUser, []]);
+                    } else {
+                        console.error(error);
+                        console.error(response.statusCode);
+                        console.error(body);
+                        sentryClient.captureMessage(body);
+                        deferred.reject(new Error(body));
+                    }
+                });
             }
         }
     });
