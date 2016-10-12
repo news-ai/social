@@ -1,7 +1,7 @@
 'use strict';
 
 var Q = require('q');
-var request = require('request');
+var request = require('requestretry');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
 var raven = require('raven');
@@ -204,10 +204,20 @@ function addToElastic(username, posts, profile, isFormatted) {
     return deferred.promise;
 }
 
+function PageNotFound(err, response, body){
+  // retry the request if we had an error or if the response was a 'Page Not Found'
+  return err || response.statusCode === 404;
+}
+
 function getInstagramIdFromUsername(username) {
     var deferred = Q.defer();
 
-    request('https://www.instagram.com/' + username + '/?__a=1', function(error, response, body) {
+    request({
+        url: 'https://www.instagram.com/' + username + '/?__a=1',
+        maxAttempts: 5,
+        retryDelay: 3000,
+        retryStrategy: PageNotFound
+    }, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var userProfile = JSON.parse(body);
             if (userProfile.user && userProfile.user.id) {
