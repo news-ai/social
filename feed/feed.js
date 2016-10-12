@@ -66,26 +66,30 @@ function getLatestFeeds() {
 
     var query = datastore.createQuery('Feed');
     var feedQuery = query.filter('Updated', '<', time._d);
+    var feedMap = {};
 
     feedQuery.run(function(err, entities) {
         entities.forEach(function(item) {
-            addFeedToPubSub(item.data.PublicationId, item.data.FeedURL)
-                .then(function(status) {
-                    // Change the `Updated` time to now
-                    item.data.Updated = moment()._d;
-                    datastore.save({
-                        key: item.key,
-                        data: item.data
-                    }, function(err) {
-                        if (err) {
-                            console.error(err);
-                            sentryClient.captureMessage(err);
-                        }
+            if (!(item.data.FeedURL in feedMap)) {
+                feedMap[item.data.FeedURL] = true;
+                addFeedToPubSub(item.data.PublicationId, item.data.FeedURL)
+                    .then(function(status) {
+                        // Change the `Updated` time to now
+                        item.data.Updated = moment()._d;
+                        datastore.save({
+                            key: item.key,
+                            data: item.data
+                        }, function(err) {
+                            if (err) {
+                                console.error(err);
+                                sentryClient.captureMessage(err);
+                            }
+                        });
+                    }, function(error) {
+                        console.error(error);
+                        sentryClient.captureMessage(error);
                     });
-                }, function(error) {
-                    console.error(error);
-                    sentryClient.captureMessage(error);
-                });
+            }
         });
     });
 }
