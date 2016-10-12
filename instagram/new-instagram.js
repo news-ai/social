@@ -308,7 +308,12 @@ function getInstagramFromNodes(media) {
 function getInstagramFromUsernameWithoutAccessToken(data) {
     var deferred = Q.defer();
 
-    request('https://www.instagram.com/' + data.username + '/?__a=1', function(error, response, body) {
+    request({
+        url: 'https://www.instagram.com/' + data.username + '/?__a=1',
+        maxAttempts: 5,
+        retryDelay: 3000,
+        retryStrategy: PageNotFound
+    }, function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramMedia = JSON.parse(body);
             var instagramUser = instagramMedia.user;
