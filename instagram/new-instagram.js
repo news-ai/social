@@ -337,6 +337,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                       }
                 }, function(error, response, body) {
                     if (!error && response.statusCode == 200) {
+                        console.log('User sent to be private');
                         deferred.resolve([instagramUser, []]);
                     } else {
                         console.error(error);
