@@ -354,6 +354,9 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                     deferred.reject(new Error(error));
                 });
             } else {
+                // Invalidate the Instagram User here before sending the error
+
+                // If user name is not invalid then shit went down
                 console.error(error);
                 console.error(response.statusCode);
                 sentryClient.captureMessage(body);
