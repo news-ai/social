@@ -1,5 +1,7 @@
 # social
 
+[Dashboard](https://app.keymetrics.io/#/bucket/57fe822672900b983297f577/dashboard)
+
 Getting data from RSS, Instagram, and twitter through Google Cloud Functions, Pub/Sub, and Google Compute Engine.
 
 Feed loops through all the feeds in the API that haven't been processed. It calls the RSS function for each feed. The RSS function gets the RSS headlines and writes them to ES.
