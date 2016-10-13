@@ -189,9 +189,24 @@ stream.on('data', function(tweet) {
 });
 
 // Garbage
-stream.on('garbage', function(data) {
-    // Restart stream
-    console.log('[GARBAGE]: ' + data);
+// Unsure why it places it as garbage, but process it anyways.
+// If it throws an error who cares.
+stream.on('garbage', function(tweet) {
+    console.log(tweet.id);
+    if (!tweet.friends) {
+        processTweet(tweet).then(function (response) {
+            rp('https://hchk.io/73a12c55-c81f-4f0e-b0fe-cc0e26c18cd7')
+                .then(function (htmlString) {
+                    console.log(response);
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
+        }, function (error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+        });
+    }
 });
 
 // Error checking
