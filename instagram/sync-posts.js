@@ -66,7 +66,7 @@ function addToElastic(posts) {
 
         var newInstagramPostId = newInstagramPost.id;
         var username = newInstagramPost.username;
-        
+
         delete newInstagramPost.id;
         delete newInstagramPost.username;
 
@@ -208,7 +208,9 @@ function syncIGAndES() {
     var deferred = Q.defer();
 
     getInstagramPostsFromEsLastWeek(0, []).then(function(data) {
-        getInstagramPostsFromAPI(data).then(function (instagramPosts) {
+        console.log(data.length);
+        getInstagramPostsFromAPI(data).then(function(instagramPosts) {
+            console.log(instagramPosts.length);
             var posts = [];
 
             for (var i = instagramPosts.length - 1; i >= 0; i--) {
@@ -243,9 +245,9 @@ function syncIGAndES() {
                 data: posts
             };
 
-            addToElastic(posts).then(function (status) {
+            addToElastic(posts).then(function(status) {
                 deferred.resolve(status);
-            }, function (error) {
+            }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             })
@@ -255,8 +257,33 @@ function syncIGAndES() {
     return deferred.promise;
 }
 
-syncIGAndES().then(function (status) {
-    console.log(status);
-}, function (error) {
-    console.error(error);
-})
+function runUpdates() {
+    // Run one initially -- mostly for when testing
+    console.log('Beginning run');
+    syncIGAndES().then(function(status) {
+        console.log(status);
+    }, function(error) {
+        console.error(error);
+    })
+
+    // Run feed code every fifteen minutes
+    setInterval(function() {
+        console.log('Updating Instagram posts');
+        syncIGAndES().then(function(status) {
+            console.log(status);
+            rp('https://hchk.io/57057b83-2bf9-454d-ad35-547b6db86d81')
+                .then(function(htmlString) {
+                    console.log('Completed execution');
+                })
+                .catch(function(err) {
+                    sentryClient.captureMessage(err);
+                    console.error(err);
+                });
+        }, function(error) {
+            sentryClient.captureMessage(error);
+            console.error(error);
+        })
+    }, 15 * 60 * 1000);
+}
+
+runUpdates();

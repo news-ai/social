@@ -23,4 +23,3 @@ var elasticSearchClient = new elasticsearch.Client({
 // Instantiate a sentry client
 var sentryClient = new raven.Client('https://666f957c7dd64957996c1b05675a960a:b942eb7df51d4f8780f55b7d4592a39f@sentry.io/105661');
 sentryClient.patchGlobal();
-
