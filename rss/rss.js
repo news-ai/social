@@ -254,37 +254,15 @@ function subscribe(cb) {
     };
 }
 
-// subscribe(function(err, message) {
-//     // Any errors received are considered fatal.
-//     if (err) {
-//         console.error(err);
-//         sentryClient.captureMessage(err);
-//         throw err;
-//     }
-//     console.log('Received request to process rss feed ' + message.data.url);
-//     getContent(message.data)
-//         .then(function(status) {
-//             rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
-//                 .then(function (htmlString) {
-//                     console.log('Completed execution for ' + message.data.url);
-//                 })
-//                 .catch(function (err) {
-//                     console.error(err);
-//                 });
-//         }, function(error) {
-//             console.error(error);
-//             sentryClient.captureMessage(error);
-//         });
-// });
-
-var message = {
-    data: {
-        'publicationId': 5166990612234240,
-        'url': 'http://feeds.feedburner.com/TheEzraKleinShow'
+subscribe(function(err, message) {
+    // Any errors received are considered fatal.
+    if (err) {
+        console.error(err);
+        sentryClient.captureMessage(err);
+        throw err;
     }
-}
-
-getContent(message.data)
+    console.log('Received request to process rss feed ' + message.data.url);
+    getContent(message.data)
         .then(function(status) {
             rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
                 .then(function (htmlString) {
@@ -297,3 +275,25 @@ getContent(message.data)
             console.error(error);
             sentryClient.captureMessage(error);
         });
+});
+
+// var message = {
+//     data: {
+//         'publicationId': 5166990612234240,
+//         'url': 'http://feeds.feedburner.com/TheEzraKleinShow'
+//     }
+// }
+
+// getContent(message.data)
+//         .then(function(status) {
+//             rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
+//                 .then(function (htmlString) {
+//                     console.log('Completed execution for ' + message.data.url);
+//                 })
+//                 .catch(function (err) {
+//                     console.error(err);
+//                 });
+//         }, function(error) {
+//             console.error(error);
+//             sentryClient.captureMessage(error);
+//         });
