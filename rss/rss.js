@@ -122,11 +122,19 @@ function addToElastic(publicationId, content) {
     } else {
         var esActions = [];
         for (var i = content.length - 1; i >= 0; i--) {
+            // If the feed doesn't have a URL field
+            var idField = "";
+            if (content[i].Url !== '') {
+                idField = content[i].Url;
+            } else {
+                idField = content[i].FeedURL + content[i].PublishDate + content[i].Title.replace(' ', '');
+            }
+
             var indexRecord = {
                 index: {
                     _index: 'headlines',
                     _type: 'headline',
-                    _id: content[i].Url
+                    _id: idField
                 }
             };
             var dataRecord = content[i];
@@ -140,7 +148,7 @@ function addToElastic(publicationId, content) {
                 index: {
                     _index: 'feeds',
                     _type: 'feed',
-                    _id: content[i].Url
+                    _id: idField
                 }
             };
             dataRecord = formatToFeed(content[i], publicationId);
@@ -246,15 +254,37 @@ function subscribe(cb) {
     };
 }
 
-subscribe(function(err, message) {
-    // Any errors received are considered fatal.
-    if (err) {
-        console.error(err);
-        sentryClient.captureMessage(err);
-        throw err;
+// subscribe(function(err, message) {
+//     // Any errors received are considered fatal.
+//     if (err) {
+//         console.error(err);
+//         sentryClient.captureMessage(err);
+//         throw err;
+//     }
+//     console.log('Received request to process rss feed ' + message.data.url);
+//     getContent(message.data)
+//         .then(function(status) {
+//             rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
+//                 .then(function (htmlString) {
+//                     console.log('Completed execution for ' + message.data.url);
+//                 })
+//                 .catch(function (err) {
+//                     console.error(err);
+//                 });
+//         }, function(error) {
+//             console.error(error);
+//             sentryClient.captureMessage(error);
+//         });
+// });
+
+var message = {
+    data: {
+        'publicationId': 5166990612234240,
+        'url': 'http://feeds.feedburner.com/TheEzraKleinShow'
     }
-    console.log('Received request to process rss feed ' + message.data.url);
-    getContent(message.data)
+}
+
+getContent(message.data)
         .then(function(status) {
             rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
                 .then(function (htmlString) {
@@ -267,4 +297,3 @@ subscribe(function(err, message) {
             console.error(error);
             sentryClient.captureMessage(error);
         });
-});

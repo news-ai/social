@@ -1,3 +1,8 @@
+/*!
+ * Gets new posts for a particular Instagram user
+ * With or without an access token
+ */
+
 'use strict';
 
 var Q = require('q');
