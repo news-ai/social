@@ -193,7 +193,7 @@ stream.on('data', function(tweet) {
 // If it throws an error who cares.
 stream.on('garbage', function(tweet) {
     console.log(tweet.id);
-    if (!tweet.friends) {
+    if (!tweet.friends && tweet.id) {
         processTweet(tweet).then(function (response) {
             rp('https://hchk.io/73a12c55-c81f-4f0e-b0fe-cc0e26c18cd7')
                 .then(function (htmlString) {
