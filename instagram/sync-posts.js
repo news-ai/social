@@ -247,7 +247,15 @@ function syncIGAndES() {
             };
 
             addToElastic(posts).then(function(status) {
-                deferred.resolve(status);
+                rp('https://hchk.io/c2b028ef-a86c-4609-8e62-6af6deeed6c4')
+                    .then(function(htmlString) {
+                        deferred.resolve(status);
+                    })
+                    .catch(function(err) {
+                        sentryClient.captureMessage(err);
+                        console.error(err);
+                        deferred.reject(err);
+                    });
             }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
@@ -272,14 +280,6 @@ function runUpdates() {
         console.log('Updating Instagram posts');
         syncIGAndES().then(function(status) {
             console.log(status);
-            rp('https://hchk.io/c2b028ef-a86c-4609-8e62-6af6deeed6c4')
-                .then(function(htmlString) {
-                    console.log('Completed execution');
-                })
-                .catch(function(err) {
-                    sentryClient.captureMessage(err);
-                    console.error(err);
-                });
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
