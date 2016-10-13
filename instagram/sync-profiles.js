@@ -23,77 +23,40 @@ var elasticSearchClient = new elasticsearch.Client({
 var sentryClient = new raven.Client('https://666f957c7dd64957996c1b05675a960a:b942eb7df51d4f8780f55b7d4592a39f@sentry.io/105661');
 sentryClient.patchGlobal();
 
-function formatToFeed(post, username) {
-    return {
-        'CreatedAt': post.CreatedAt,
-        'Type': 'Instagram',
-
-        // Headlines
-        'Title': '',
-        'Url': '',
-        'Summary': '',
-        'FeedURL': '',
-        'PublicationId': 0,
-
-        // Tweet
-        'TweetId': 0,
-        'Username': '',
-
-        // Tweet + Instagram
-        'Text': post.Caption,
-
-        // Instagram
-        'InstagramUsername': username,
-        'InstagramId': post.InstagramId,
-        'InstagramImage': post.Image,
-        'InstagramVideo': post.Video,
-        'InstagramLink': post.Link,
-        'InstagramLikes': post.Likes,
-        'InstagramComments': post.Comments
-    };
-}
-
 // Add these instagram posts to ElasticSearch
 // username here is the base parent username.
 // Not just a username of any user.
-function addToElastic(posts) {
+function addToElastic(profiles) {
     var deferred = Q.defer();
 
     var esActions = [];
-    // Look through all the instagram data
-    for (var i = posts.data.length - 1; i >= 0; i--) {
-        var newInstagramPost = posts.data[i];
 
-        var newInstagramPostId = newInstagramPost.id;
-        var username = newInstagramPost.username;
-
-        delete newInstagramPost.id;
-        delete newInstagramPost.username;
-
-        // Add to instagram endpoint
+    for (var i = profiles.data.length - 1; i >= 0; i--) {
         var indexRecord = {
             index: {
                 _index: 'instagrams',
-                _type: 'instagram',
-                _id: newInstagramPostId
+                _type: 'user',
+                _id: profiles.data[i].username
             }
         };
-        var dataRecord = newInstagramPost;
-        dataRecord.Username = username;
-        esActions.push(indexRecord);
-        esActions.push({
-            data: dataRecord
-        });
 
-        // Add to feeds endpoint
-        indexRecord = {
-            index: {
-                _index: 'feeds',
-                _type: 'feed',
-                _id: newInstagramPostId
-            }
+        var user = {
+            'username': profiles.data[i].username || '',
+            'bio': profiles.data[i].biography || '',
+            'website': profiles.data[i].external_url || '',
+            'profile_picture': profiles.data[i].profile_pic_url || '',
+            'full_name': profiles.data[i].full_name || '',
+            'counts': {
+                'media': profiles.data[i].media.count || 0,
+                'followed_by': profiles.data[i].followed_by && profiles.data[i].followed_by.count || 0,
+                'follows': profiles.data[i].follows && profiles.data[i].follows.count || 0
+            },
+            'id': profiles.data[i].id || ''
         };
-        dataRecord = formatToFeed(newInstagramPost, username);
+
+
+        var dataRecord = user;
+        dataRecord.Username = profiles.data[i].username;
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord
@@ -119,39 +82,22 @@ function addToElastic(posts) {
     return deferred.promise;
 }
 
-function getInstagramPageFromEsLastWeek(offset) {
+function getInstagramPageFromEs(offset) {
     var deferred = Q.defer();
-
-    var dateTo = moment().format('YYYY-MM-DD');
-    var dateFrom = moment().subtract(7, 'd')
-    var lastWeek = dateFrom.format('YYYY-MM-DDTHH:mm:ss');
 
     elasticSearchClient.search({
         index: 'instagrams',
-        type: 'instagram',
+        type: 'user',
         body: {
             "query": {
                 "filtered": {
                     "query": {
                         "match_all": {}
-                    },
-                    "filter": {
-                        "range": {
-                            "data.CreatedAt": {
-                                "gte": lastWeek
-                            }
-                        }
                     }
                 }
             },
-            "sort": [{
-                "data.CreatedAt": {
-                    "order": "desc",
-                    "mode": "avg"
-                }
-            }],
             "size": 100,
-            "from": 100 * offset,
+            "from": 100 * offset
         }
     }).then(function(resp) {
         var hits = resp.hits.hits;
@@ -163,29 +109,29 @@ function getInstagramPageFromEsLastWeek(offset) {
     return deferred.promise;
 }
 
-function getInstagramPostsFromEsLastWeek(offset, allData) {
+function getInstagramProfiles(offset, allData) {
     var deferred = Q.defer();
 
-    getInstagramPageFromEsLastWeek(offset).then(function(data) {
+    getInstagramPageFromEs(offset).then(function(data) {
         if (data.length === 0) {
             deferred.resolve(allData);
         } else {
             var newData = allData.concat(data);
-            deferred.resolve(getInstagramPostsFromEsLastWeek(offset + 1, newData));
+            deferred.resolve(getInstagramProfiles(offset + 1, newData));
         }
     });
 
     return deferred.promise;
 }
 
-function getInstagramFromPostLink(postLink) {
+function getInstagramFromProfileLink(profileLink) {
     var deferred = Q.defer();
 
-    request(postLink + '?__a=1', function(error, response, body) {
+    request(profileLink + '?__a=1', function(error, response, body) {
         if (!error && response.statusCode == 200) {
-            var instagramPost = JSON.parse(body);
-            var instagramMedia = instagramPost.media;
-            deferred.resolve(instagramMedia);
+            var instagramProfile = JSON.parse(body);
+            var instagramUser = instagramProfile.user;
+            deferred.resolve(instagramUser);
         } else {
             sentryClient.captureMessage(body);
             deferred.reject(new Error(body));
@@ -195,10 +141,11 @@ function getInstagramFromPostLink(postLink) {
     return deferred.promise;
 }
 
-function getInstagramPostsFromAPI(data) {
+function getInstagramProfilesFromAPI(data) {
     var allPromises = [];
     for (var i = data.length - 1; i >= 0; i--) {
-        var toExecute = getInstagramFromPostLink(data[i]._source.data.Link);
+        var url = 'https://www.instagram.com/' + data[i]._id + '/';
+        var toExecute = getInstagramFromProfileLink(url);
         allPromises.push(toExecute);
     }
     return Q.allSettled(allPromises);
@@ -207,45 +154,26 @@ function getInstagramPostsFromAPI(data) {
 function syncIGAndES() {
     var deferred = Q.defer();
 
-    getInstagramPostsFromEsLastWeek(0, []).then(function(data) {
+    getInstagramProfiles(0, []).then(function(data) {
         console.log(data.length);
-        getInstagramPostsFromAPI(data).then(function(instagramPosts) {
-            console.log(instagramPosts.length);
-            var posts = [];
+        getInstagramProfilesFromAPI(data).then(function(instagramProfiles) {
+            console.log(instagramProfiles.length);
+            var profiles = [];
 
-            for (var i = instagramPosts.length - 1; i >= 0; i--) {
-                if (instagramPosts[i].state === 'fulfilled') {
-                    instagramPosts[i] = instagramPosts[i].value;
-                    var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
-                    var tags = instagramPosts[i].caption && instagramPosts[i].caption.match(/#[a-z]+/gi) || [];
-
-                    var post = {
-                        'CreatedAt': moment.unix(parseInt(instagramPosts[i].date, 10)).format('YYYY-MM-DDTHH:mm:ss'),
-                        'Video': instagramPosts[i].video_url || '',
-                        'Image': instagramPosts[i].display_src || '',
-                        'Location': instagramPosts[i].location && instagramPosts[i].location.name || '',
-                        'Coordinates': '',
-                        'InstagramId': instagramId || '',
-                        'Caption': instagramPosts[i].caption || '',
-                        'Likes': instagramPosts[i].likes && instagramPosts[i].likes.count || 0,
-                        'Comments': instagramPosts[i].comments && instagramPosts[i].comments.count || 0,
-                        'Link': 'https://www.instagram.com/p/' + instagramPosts[i].code + '/' || '',
-                        'Tags': tags || [],
-                        'id': instagramId || '',
-                        'username': instagramPosts[i].owner && instagramPosts[i].owner.username || '',
-                    };
-
-                    posts.push(post);
+            for (var i = instagramProfiles.length - 1; i >= 0; i--) {
+                if (instagramProfiles[i].state === 'fulfilled') {
+                    instagramProfiles[i] = instagramProfiles[i].value;
+                    profiles.push(instagramProfiles[i]);
                 } else {
-                    console.log('deleted posts');
+                    console.log('deleted profile');
                 }
             }
 
-            posts = {
-                data: posts
+            profiles = {
+                data: profiles
             };
 
-            addToElastic(posts).then(function(status) {
+            addToElastic(profiles).then(function(status) {
                 deferred.resolve(status);
             }, function(error) {
                 sentryClient.captureMessage(error);
