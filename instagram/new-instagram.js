@@ -6,6 +6,7 @@
 'use strict';
 
 var Q = require('q');
+var rp = require('request-promise');
 var request = require('requestretry');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
@@ -584,7 +585,13 @@ subscribe(function(err, message) {
     console.log('Received request to process instagram feed ' + message.data.username);
     processInstagramUser(message.data)
         .then(function(status) {
-            console.log('Completed execution for ' + message.data.username);
+            rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
+                .then(function (htmlString) {
+                    console.log('Completed execution for ' + message.data.username);
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
         }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);

@@ -271,7 +271,7 @@ function runUpdates() {
         console.log('Updating Instagram posts');
         syncIGAndES().then(function(status) {
             console.log(status);
-            rp('https://hchk.io/57057b83-2bf9-454d-ad35-547b6db86d81')
+            rp('https://hchk.io/c2b028ef-a86c-4609-8e62-6af6deeed6c4')
                 .then(function(htmlString) {
                     console.log('Completed execution');
                 })
