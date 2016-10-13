@@ -283,7 +283,7 @@ function runUpdates() {
             sentryClient.captureMessage(error);
             console.error(error);
         })
-    }, 15 * 60 * 1000);
+    }, 60 * 60 * 1000);
 }
 
 runUpdates();
