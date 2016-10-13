@@ -211,7 +211,7 @@ function runUpdates() {
             sentryClient.captureMessage(error);
             console.error(error);
         })
-    }, 60 * 60 * 1000);
+    }, 6 * 60 * 60 * 1000);
 }
 
 runUpdates();
