@@ -4,6 +4,7 @@
 'use strict';
 
 var Q = require('q');
+var rp = require('request-promise');
 var request = require('requestretry');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
