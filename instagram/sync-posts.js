@@ -23,13 +23,12 @@ var elasticSearchClient = new elasticsearch.Client({
 var sentryClient = new raven.Client('https://666f957c7dd64957996c1b05675a960a:b942eb7df51d4f8780f55b7d4592a39f@sentry.io/105661');
 sentryClient.patchGlobal();
 
-function getInstagramPageFromLastWeek(offset) {
+function getInstagramPageFromEsLastWeek(offset) {
     var deferred = Q.defer();
 
     var dateTo = moment().format('YYYY-MM-DD');
     var dateFrom = moment().subtract(7, 'd')
     var lastWeek = dateFrom.format('YYYY-MM-DDTHH:mm:ss');
-    console.log(lastWeek);
 
     elasticSearchClient.search({
         index: 'instagrams',
@@ -68,21 +67,55 @@ function getInstagramPageFromLastWeek(offset) {
     return deferred.promise;
 }
 
-function getInstagramPostsFromLastWeek(offset, allData) {
+function getInstagramPostsFromEsLastWeek(offset, allData) {
     var deferred = Q.defer();
 
-    getInstagramPageFromLastWeek(offset).then(function(data) {
+    getInstagramPageFromEsLastWeek(offset).then(function(data) {
         if (data.length === 0) {
             deferred.resolve(allData);
         } else {
             var newData = allData.concat(data);
-            deferred.resolve(getInstagramPostsFromLastWeek(offset + 1, newData));
+            deferred.resolve(getInstagramPostsFromEsLastWeek(offset + 1, newData));
         }
     });
 
     return deferred.promise;
 }
 
-getInstagramPostsFromLastWeek(0, []).then(function(data) {
-    console.log(data.length);
+function getInstagramFromPostLink(postLink) {
+    var deferred = Q.defer();
+
+    request(postLink + '?__a=1', function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var instagramPost = JSON.parse(body);
+            var instagramMedia = instagramPost.media;
+            deferred.resolve(instagramMedia);
+        } else {
+            sentryClient.captureMessage(body);
+            deferred.reject(new Error(body));
+        }
+    });
+
+    return deferred.promise;
+}
+
+function getInstagramPostsFromAPI(data) {
+    var allPromises = [];
+    for (var i = data.length - 1; i >= 0; i--) {
+        var toExecute = getInstagramFromPostLink(data[i]._source.data.Link);
+        allPromises.push(toExecute);
+    }
+    return Q.allSettled(allPromises);
+}
+
+getInstagramPostsFromEsLastWeek(0, []).then(function(data) {
+    getInstagramPostsFromAPI(data).then(function (instagramPosts) {
+        for (var i = instagramPosts.length - 1; i >= 0; i--) {
+            if (instagramPosts[i].state === 'fulfilled') {
+                console.log(instagramPosts[i]);
+            } else {
+                console.log('rejected');
+            }
+        }
+    });
 });
