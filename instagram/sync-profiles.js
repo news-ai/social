@@ -20,7 +20,7 @@ var elasticSearchClient = new elasticsearch.Client({
 });
 
 // Instantiate a sentry client
-var sentryClient = new raven.Client('https://666f957c7dd64957996c1b05675a960a:b942eb7df51d4f8780f55b7d4592a39f@sentry.io/105661');
+var sentryClient = new raven.Client('https://a026de7b0e4b40448b769ad8d17c8a90:d7fd5ae279134c51bc10e37c5485b93f@sentry.io/106015');
 sentryClient.patchGlobal();
 
 // Add these instagram posts to ElasticSearch
