@@ -1,7 +1,6 @@
 /*!
  * Syncs single Instagram posts from Instagram API to ES
  */
-
 'use strict';
 
 var Q = require('q');
@@ -28,20 +27,41 @@ function getInstagramPostsFromLastWeek() {
     var deferred = Q.defer();
 
     elasticSearchClient.search({
-      index: 'twitter',
-      type: 'tweets',
-      body: {
-        query: {
-          match: {
-            body: 'elasticsearch'
-          }
+        index: 'instagrams',
+        type: 'instagram',
+        body: {
+            "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "filter": {
+                        "range": {
+                            "data.CreatedAt": {
+                                "gte": "2016-05-02T14:14:27"
+                            }
+                        }
+                    }
+                }
+            },
+            "sort": [{
+                "data.CreatedAt": {
+                    "order": "desc",
+                    "mode": "avg"
+                }
+            }],
+            "size": 100
         }
-      }
-    }).then(function (resp) {
+    }).then(function(resp) {
         var hits = resp.hits.hits;
-    }, function (err) {
+        console.log(hits);
+    }, function(err) {
         console.trace(err.message);
-    });    
+    });
 
     return deferred.promise;
 }
+
+getInstagramPostsFromLastWeek().then(function (data) {
+    console.log(data);
+});
