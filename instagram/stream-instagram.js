@@ -2,6 +2,8 @@
  * Looks for when people are posting new Instagram posts
  */
 
+'use strict';
+
 var Q = require('q');
 var rp = require('request-promise');
 var request = require('requestretry');
@@ -19,7 +21,9 @@ var elasticSearchClient = new elasticsearch.Client({
     rejectUnauthorized: false
 });
 
-'use strict';
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://a026de7b0e4b40448b769ad8d17c8a90:d7fd5ae279134c51bc10e37c5485b93f@sentry.io/106015');
+sentryClient.patchGlobal();
 
 function getInstagramPageFromEs(offset) {
     var deferred = Q.defer();
@@ -89,3 +93,41 @@ function getInstagramProfilesFromAPI(data) {
     }
     return Q.allSettled(allPromises);
 }
+
+function syncIGAndES() {
+    var deferred = Q.defer();
+
+    getInstagramProfiles(0, []).then(function(data) {
+        console.log(data.length);
+        getInstagramProfilesFromAPI(data).then(function(instagramProfiles) {
+            console.log(instagramProfiles.length);
+
+            console.log(instagramProfiles[0].value.media.nodes)
+        });
+    });
+
+    return deferred.promise;
+}
+
+function runUpdates() {
+    // Run one initially -- mostly for when testing
+    console.log('Beginning run');
+    syncIGAndES().then(function(status) {
+        console.log(status);
+    }, function(error) {
+        console.error(error);
+    })
+
+    // Run feed code every fifteen minutes
+    setInterval(function() {
+        console.log('Getting data from Instagram profiles');
+        syncIGAndES().then(function(status) {
+            console.log('Completed execution');
+        }, function(error) {
+            sentryClient.captureMessage(error);
+            console.error(error);
+        })
+    }, 6 * 60 * 60 * 1000);
+}
+
+runUpdates();
