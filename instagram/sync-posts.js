@@ -50,7 +50,9 @@ function formatToFeed(post, username) {
         'InstagramVideo': post.Video,
         'InstagramLink': post.Link,
         'InstagramLikes': post.Likes,
-        'InstagramComments': post.Comments
+        'InstagramComments': post.Comments,
+        'InstagramWidth': post.InstagramWidth,
+        'InstagramHeight': post.InstagramHeight,
     };
 }
 
@@ -234,6 +236,8 @@ function syncIGAndES() {
                         'Tags': tags || [],
                         'id': instagramId || '',
                         'username': instagramPosts[i].owner && instagramPosts[i].owner.username || '',
+                        'InstagramHeight': instagramPosts[i].dimensions && instagramPosts[i].dimensions.height || 0,
+                        'InstagramWidth': instagramPosts[i].dimensions && instagramPosts[i].dimensions.width || 0,
                     };
 
                     posts.push(post);
