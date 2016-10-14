@@ -99,7 +99,9 @@ function formatToFeed(post, username) {
         'InstagramVideo': post.Video,
         'InstagramLink': post.Link,
         'InstagramLikes': post.Likes,
-        'InstagramComments': post.Comments
+        'InstagramComments': post.Comments,
+        'InstagramWidth': post.InstagramWidth,
+        'InstagramHeight': post.InstagramHeight,
     };
 }
 
@@ -132,6 +134,9 @@ function addToElastic(username, posts, profile, isFormatted) {
             newInstagramPost.Likes = posts.data[i].likes && posts.data[i].likes.count || 0;
             newInstagramPost.Comments = posts.data[i].comments && posts.data[i].comments.count || 0;
             newInstagramPost.Link = posts.data[i].link || '';
+
+            newInstagramPost.InstagramWidth = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.width || 0;
+            newInstagramPost.InstagramHeight = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.height || 0;
 
             var tags = [];
             if (posts.data[i].tags && posts.data[i].tags.length > 0) {
@@ -457,7 +462,9 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
             'Comments': instagramPosts[i].comments && instagramPosts[i].comments.count || 0,
             'Link': 'https://www.instagram.com/p/' + instagramPosts[i].code + '/' || '',
             'Tags': tags || [],
-            'id': instagramId || ''
+            'id': instagramId || '',
+            'InstagramHeight': instagramPosts[i].dimensions && instagramPosts[i].dimensions.height || 0,
+            'InstagramWidth': instagramPosts[i].dimensions && instagramPosts[i].dimensions.width || 0,
         };
         posts.push(post);
     }
