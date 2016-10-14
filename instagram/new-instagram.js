@@ -29,36 +29,7 @@ var subscriptionName = 'node-new-user-instagram';
 var sentryClient = new raven.Client('https://4db5dd699d4a4267ab6f56fa97a9ee5c:9240e5b57b864de58f514b6d40e7e5a7@sentry.io/103131');
 sentryClient.patchGlobal();
 
-function addFeedToPubSub(instagramUser) {
-    var deferred = Q.defer();
-
-    instagram.getTopic(topicName, function(err, topic) {
-        if (err) {
-            deferred.reject(new Error(err));
-            console.error('Error occurred while getting pubsub topic', err);
-            sentryClient.captureMessage(err);
-        } else {
-            topic.publish({
-                data: {
-                    username: instagramUser,
-                    access_token: '',
-                    depth: 1
-                }
-            }, function(err) {
-                if (err) {
-                    deferred.reject(new Error(err));
-                    console.error('Error occurred while queuing background task', err);
-                    sentryClient.captureMessage(err);
-                } else {
-                    deferred.resolve(true);
-                    console.info('Instagram user ' + instagramUser + ' sent to ' + topicName + ' pubsub');
-                }
-            });
-        }
-    });
-
-    return deferred.promise;
-}
+var newInstagram = exports;
 
 // Add these instagram posts to ElasticSearch
 // username here is the base parent username.
@@ -330,7 +301,12 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
             }
         } else {
             if (!('depth' in data)) {
-                addFeedToPubSub(data.username).then(function (status) {
+                var pubData = {
+                    username: data.username,
+                    access_token: '',
+                    depth: 1
+                };
+                instagram.addFeedToPubSub(topicName, pubData).then(function (status) {
                     if (status) {
                         var error = 'Error occured, but sent another pubsub';
                         sentryClient.captureMessage(error);
@@ -525,3 +501,5 @@ instagram.subscribe(topicName, subscriptionName, function(err, message) {
 //     }, function(error) {
 //         console.error(error);
 //     });
+
+newInstagram.processInstagramUser = processInstagramUser;

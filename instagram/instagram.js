@@ -260,6 +260,33 @@ function subscribe(topicName, subscriptionName, cb) {
         }
     };
 }
+function addFeedToPubSub(topicName, pubData) {
+    var deferred = Q.defer();
+
+    getTopic(topicName, function(err, topic) {
+        if (err) {
+            deferred.reject(new Error(err));
+            console.error('Error occurred while getting pubsub topic', err);
+            sentryClient.captureMessage(err);
+        } else {
+            topic.publish({
+                data: pubData
+            }, function(err) {
+                if (err) {
+                    deferred.reject(new Error(err));
+                    console.error('Error occurred while queuing background task', err);
+                    sentryClient.captureMessage(err);
+                } else {
+                    deferred.resolve(true);
+                    console.info('Instagram user ' + pubData.username + ' sent to ' + topicName + ' pubsub');
+                }
+            });
+        }
+    });
+
+    return deferred.promise;
+}
+
 
 instagram.getInstagramProfiles = getInstagramProfiles;
 instagram.getInstagramProfilesFromAPI = getInstagramProfilesFromAPI;
@@ -267,3 +294,4 @@ instagram.getInstagramPostsFromAPI = getInstagramPostsFromAPI;
 instagram.getInstagramPostsFromEsLastWeek = getInstagramPostsFromEsLastWeek;
 instagram.getTopic = getTopic;
 instagram.subscribe = subscribe;
+instagram.addFeedToPubSub = addFeedToPubSub;
