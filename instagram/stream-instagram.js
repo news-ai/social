@@ -10,9 +10,6 @@ var request = require('requestretry');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
 var raven = require('raven');
-var gcloud = require('google-cloud')({
-    projectId: 'newsai-1166'
-});
 
 var instagram = require('./instagram');
 

@@ -11,9 +11,6 @@ var request = require('requestretry');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
 var raven = require('raven');
-var gcloud = require('google-cloud')({
-    projectId: 'newsai-1166'
-});
 
 var instagram = require('./instagram');
 
@@ -27,27 +24,15 @@ var elasticSearchClient = new elasticsearch.Client({
 // Initialize Google Cloud
 var topicName = 'process-instagram-feed';
 var subscriptionName = 'node-new-user-instagram';
-var pubsub = gcloud.pubsub();
 
 // Instantiate a sentry client
 var sentryClient = new raven.Client('https://4db5dd699d4a4267ab6f56fa97a9ee5c:9240e5b57b864de58f514b6d40e7e5a7@sentry.io/103131');
 sentryClient.patchGlobal();
 
-// Get a Google Cloud topic
-function getTopic(cb) {
-    pubsub.createTopic(topicName, function(err, topic) {
-        // topic already exists.
-        if (err && err.code === 409) {
-            return cb(null, pubsub.topic(topicName));
-        }
-        return cb(err, topic);
-    });
-}
-
 function addFeedToPubSub(instagramUser) {
     var deferred = Q.defer();
 
-    getTopic(function(err, topic) {
+    instagram.getTopic(topicName, function(err, topic) {
         if (err) {
             deferred.reject(new Error(err));
             console.error('Error occurred while getting pubsub topic', err);
@@ -502,57 +487,8 @@ function processInstagramUser(data) {
     return deferred.promise;
 }
 
-// Subscribe to Pub/Sub for this particular topic
-function subscribe(cb) {
-    var subscription;
-
-    // Event handlers
-    function handleMessage(message) {
-        cb(null, message);
-    }
-
-    function handleError(err) {
-        console.error(err);
-        sentryClient.captureMessage(err);
-    }
-
-    getTopic(function(err, topic) {
-        if (err) {
-            return cb(err);
-        }
-
-        topic.subscribe(subscriptionName, {
-            autoAck: true,
-            reuseExisting: true
-        }, function(err, sub) {
-            if (err) {
-                return cb(err);
-            }
-
-            subscription = sub;
-
-            // Listen to and handle message and error events
-            subscription.on('message', handleMessage);
-            subscription.on('error', handleError);
-
-            console.log('Listening to ' + topicName +
-                ' with subscription ' + subscriptionName);
-        });
-    });
-
-    // Subscription cancellation function
-    return function() {
-        if (subscription) {
-            // Remove event listeners
-            subscription.removeListener('message', handleMessage);
-            subscription.removeListener('error', handleError);
-            subscription = undefined;
-        }
-    };
-}
-
 // Begin subscription
-subscribe(function(err, message) {
+instagram.subscribe(topicName, subscriptionName, function(err, message) {
     // Any errors received are considered fatal.
     if (err) {
         console.error(err);
