@@ -54,8 +54,8 @@ Pub/Sub call:
 3 functions:
 
 1. Get initial data for Instagram user and posts (new)
-2. Repeatedly keep the data up to date (sync)
-3. Get new posts as they come out (incoming)
+2. Repeatedly keep the data up to date (sync (posts & profiles))
+3. Get new posts as they come out (stream)
 
 Pub/Sub call:
 
@@ -68,7 +68,8 @@ Pub/Sub call:
 }
 ```
 
-- `sync-posts.js` does not take any arguments. It reads from `/instagrams/instagram/_search` on ES.
+- `sync-posts.js` does not take any arguments. It reads from `/instagrams/instagram/_search` on ES for the last week.
+- `sync-profiles.js` does not take any arguments. It reads from `/instagrams/user/_search` on ES.
 - `stream-instagram.js`
 
 ### Compute Engine
