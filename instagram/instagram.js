@@ -3,6 +3,7 @@
 var Q = require('q');
 var request = require('requestretry');
 var elasticsearch = require('elasticsearch');
+var moment = require('moment');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -106,7 +107,6 @@ function getInstagramFromProfileLink(profileLink) {
             var instagramUser = instagramProfile.user;
             deferred.resolve(instagramUser);
         } else {
-            sentryClient.captureMessage(body);
             deferred.reject(new Error(body));
         }
     });
@@ -123,7 +123,6 @@ function getInstagramFromPostLink(postLink) {
             var instagramMedia = instagramPost.media;
             deferred.resolve(instagramMedia);
         } else {
-            sentryClient.captureMessage(body);
             deferred.reject(new Error(body));
         }
     });

@@ -149,7 +149,15 @@ function syncIGAndES() {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             })
+        }, function (error) {
+            sentryClient.captureMessage(error);
+            console.error(error);
+            deferred.reject(error);
         });
+    }, function (error) {
+        sentryClient.captureMessage(error);
+        console.error(error);
+        deferred.reject(error);
     });
 
     return deferred.promise;
