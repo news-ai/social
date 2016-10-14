@@ -174,9 +174,18 @@ function syncIGAndES() {
             };
 
             addToElastic(profiles).then(function(status) {
-                deferred.resolve(status);
+                rp('https://hchk.io/31a96c67-555f-47a0-b6e3-6ed4dc3980cf')
+                    .then(function(htmlString) {
+                        deferred.resolve(status);
+                    })
+                    .catch(function(err) {
+                        sentryClient.captureMessage(err);
+                        console.error(err);
+                        deferred.reject(err);
+                    });
             }, function(error) {
                 sentryClient.captureMessage(error);
+                console.error(error);
                 deferred.reject(error);
             })
         });
@@ -198,15 +207,7 @@ function runUpdates() {
     setInterval(function() {
         console.log('Updating Instagram profiles');
         syncIGAndES().then(function(status) {
-            console.log(status);
-            rp('https://hchk.io/31a96c67-555f-47a0-b6e3-6ed4dc3980cf')
-                .then(function(htmlString) {
-                    console.log('Completed execution');
-                })
-                .catch(function(err) {
-                    sentryClient.captureMessage(err);
-                    console.error(err);
-                });
+            console.log('Completed execution');
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
