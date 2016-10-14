@@ -15,6 +15,8 @@ var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
 });
 
+var instagram = require('./instagram');
+
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
     host: 'https://newsai:XkJRNRx2EGCd6@search1.newsai.org',
@@ -71,38 +73,6 @@ function addFeedToPubSub(instagramUser) {
     });
 
     return deferred.promise;
-}
-
-function formatToFeed(post, username) {
-    return {
-        'CreatedAt': post.CreatedAt,
-        'Type': 'Instagram',
-
-        // Headlines
-        'Title': '',
-        'Url': '',
-        'Summary': '',
-        'FeedURL': '',
-        'PublicationId': 0,
-
-        // Tweet
-        'TweetId': 0,
-        'Username': '',
-
-        // Tweet + Instagram
-        'Text': post.Caption,
-
-        // Instagram
-        'InstagramUsername': username,
-        'InstagramId': post.InstagramId,
-        'InstagramImage': post.Image,
-        'InstagramVideo': post.Video,
-        'InstagramLink': post.Link,
-        'InstagramLikes': post.Likes,
-        'InstagramComments': post.Comments,
-        'InstagramWidth': post.InstagramWidth,
-        'InstagramHeight': post.InstagramHeight,
-    };
 }
 
 // Add these instagram posts to ElasticSearch
@@ -172,7 +142,7 @@ function addToElastic(username, posts, profile, isFormatted) {
                 _id: newInstagramPostId
             }
         };
-        dataRecord = formatToFeed(newInstagramPost, username);
+        dataRecord = instagram.formatToFeed(newInstagramPost, username);
         esActions.push(indexRecord);
         esActions.push({
             data: dataRecord
