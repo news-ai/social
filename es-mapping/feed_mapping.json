@@ -9,7 +9,7 @@
               "format": "strict_date_optional_time||epoch_millis"
             },
             "FeedURL": {
-              "type": "string"
+              "type": "string",
               "index": "not_analyzed"
             },
             "InstagramComments": {
@@ -61,7 +61,7 @@
               "type": "string"
             },
             "Url": {
-              "type": "string"
+              "type": "string",
               "index": "not_analyzed"
             },
             "Username": {
