@@ -1,0 +1,75 @@
+{
+  "mappings": {
+    "feed": {
+      "properties": {
+        "data": {
+          "properties": {
+            "CreatedAt": {
+              "type": "date",
+              "format": "strict_date_optional_time||epoch_millis"
+            },
+            "FeedURL": {
+              "type": "string"
+              "index": "not_analyzed"
+            },
+            "InstagramComments": {
+              "type": "long"
+            },
+            "InstagramHeight": {
+              "type": "long"
+            },
+            "InstagramId": {
+              "type": "string"
+            },
+            "InstagramImage": {
+              "type": "string"
+            },
+            "InstagramLikes": {
+              "type": "long"
+            },
+            "InstagramLink": {
+              "type": "string"
+            },
+            "InstagramUsername": {
+              "type": "string"
+            },
+            "InstagramVideo": {
+              "type": "string"
+            },
+            "InstagramWidth": {
+              "type": "long"
+            },
+            "PublicationId": {
+              "type": "long"
+            },
+            "Summary": {
+              "type": "string"
+            },
+            "Text": {
+              "type": "string"
+            },
+            "Title": {
+              "type": "string"
+            },
+            "TweetId": {
+              "type": "long"
+            },
+            "TweetIdStr": {
+              "type": "string"
+            },
+            "Type": {
+              "type": "string"
+            },
+            "Url": {
+              "type": "string"
+              "index": "not_analyzed"
+            },
+            "Username": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
