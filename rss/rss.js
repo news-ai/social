@@ -68,8 +68,6 @@ function getFeedFromUrl(url) {
             }
             if (!url) {
                 url = "";
-            } else {
-                url = url.replace("@", "#40");
             }
             var content = {
                 Title: item.title,
@@ -93,7 +91,6 @@ function getFeedFromUrl(url) {
 }
 
 function formatToFeed(headline, publicationId) {
-    headline.FeedURL = headline.FeedURL.replace("@", "#40");
     return {
         'CreatedAt': headline.PublishDate,
         'Type': 'Headline',
