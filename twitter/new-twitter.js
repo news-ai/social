@@ -78,14 +78,14 @@ function formatToFeed(tweet, username) {
         'PublicationId': 0,
 
         // Tweet specific
-        'Username': username
+        'Username': username,
         'TweetId': tweet.TweetId,
         'TweetIdStr': tweet.TweetIdStr,
         'TwitterLikes': post.Likes,
         'TwitterRetweets': post.Retweets,
 
         // Instagram + Twitter
-        'Text': tweet.Text,
+        'Text': tweet.Text
     };
 }
 
