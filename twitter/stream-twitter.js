@@ -42,8 +42,8 @@ function formatToFeed(tweet, username) {
         // Tweet
         'TweetId': tweet.TweetId,
         'TweetIdStr': tweet.TweetIdStr,
-        'TwitterLikes': post.Likes,
-        'TwitterRetweets': post.Retweets,
+        'TwitterLikes': tweet.Likes,
+        'TwitterRetweets': tweet.Retweets,
         'Text': tweet.Text,
         'Username': username,
     };
