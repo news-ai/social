@@ -77,11 +77,15 @@ function formatToFeed(tweet, username) {
         'FeedURL': '',
         'PublicationId': 0,
 
-        // Tweet
+        // Tweet specific
+        'Username': username
         'TweetId': tweet.TweetId,
         'TweetIdStr': tweet.TweetIdStr,
+        'TwitterLikes': post.Likes,
+        'TwitterRetweets': post.Retweets,
+
+        // Instagram + Twitter
         'Text': tweet.Text,
-        'Username': username
     };
 }
 
@@ -95,10 +99,25 @@ function addToElastic(username, tweets) {
     var tweetsToAdd = [];
 
     for (var i = tweets.length - 1; i >= 0; i--) {
+        var coordinates = '';
+        if (tweets[i].coordinates && tweets[i].coordinates.coordinates && tweets[i].coordinates.coordinates.length === 2) {
+            coordinates = tweets[i].coordinates.coordinates[0].toString() + ',' + tweets[i].coordinates.coordinates[1].toString();
+        }
+
+        var isRetweeted = false
+        if (tweets[i].retweeted_status && tweets[i].retweeted_status.created_at) {
+            isRetweeted = true;
+        }
+
         tweetsToAdd.push({
             'TweetId': tweets[i].id,
             'TweetIdStr': tweets[i].id_str,
             'Text': tweets[i].text,
+            'Likes': tweets[i].favorite_count,
+            'Retweets': tweets[i].retweet_count,
+            'Place': tweets[i].place && tweets[i].place.full_name || '',
+            'Coordinates': coordinates,
+            'Retweeted': isRetweeted,
             'CreatedAt': moment(tweets[i].created_at).format('YYYY-MM-DDTHH:mm:ss') // damn you Twitter and your dates
         });
     }

@@ -42,6 +42,8 @@ function formatToFeed(tweet, username) {
         // Tweet
         'TweetId': tweet.TweetId,
         'TweetIdStr': tweet.TweetIdStr,
+        'TwitterLikes': post.Likes,
+        'TwitterRetweets': post.Retweets,
         'Text': tweet.Text,
         'Username': username,
     };
@@ -52,10 +54,25 @@ function addTweetToEs(tweet, username) {
 
     var esActions = [];
 
+    var coordinates = '';
+    if (tweet.coordinates && tweet.coordinates.coordinates && tweet.coordinates.coordinates.length === 2) {
+        coordinates = tweet.coordinates.coordinates[0].toString() + ',' + tweet.coordinates.coordinates[1].toString();
+    }
+
+    var isRetweeted = false
+    if (tweet.retweeted_status && tweet.retweeted_status.created_at) {
+        isRetweeted = true;
+    }
+
     var tweetToAdd = {
         'TweetId': tweet.id,
         'TweetIdStr': tweet.id_str,
         'Text': tweet.text,
+        'Likes': tweet.favorite_count,
+        'Retweets': tweet.retweet_count,
+        'Place': tweet.place && tweet.place.full_name || '',
+        'Coordinates': coordinates,
+        'Retweeted': isRetweeted,
         'CreatedAt': moment(tweet.created_at).format('YYYY-MM-DDTHH:mm:ss')
     };
 
