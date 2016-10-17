@@ -76,9 +76,6 @@ function addTweetToEs(tweet, username) {
         'CreatedAt': moment.unix(parseInt(tweet.timestamp_ms, 10) * 0.001).format('YYYY-MM-DDTHH:mm:ss')
     };
 
-    console.log("X");
-    console.log(tweetToAdd);
-
     var indexRecord = {
         index: {
             _index: 'tweets',
