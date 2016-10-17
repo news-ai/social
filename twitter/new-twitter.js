@@ -81,8 +81,8 @@ function formatToFeed(tweet, username) {
         'Username': username,
         'TweetId': tweet.TweetId,
         'TweetIdStr': tweet.TweetIdStr,
-        'TwitterLikes': post.Likes,
-        'TwitterRetweets': post.Retweets,
+        'TwitterLikes': tweet.Likes,
+        'TwitterRetweets': tweet.Retweets,
 
         // Instagram + Twitter
         'Text': tweet.Text
