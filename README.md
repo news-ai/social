@@ -48,6 +48,8 @@ Pub/Sub call:
 ```
 
 - `stream-twitter.js` doesn't need anything to run.
+- `sync-profiles.js` doesn't need anything to run.
+- `sync-posts.js` doesn't need anything to run.
 
 ### Instagram
 
