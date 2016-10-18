@@ -61,10 +61,11 @@ function addESActionsToEs(esActions) {
         body: esActions
     }, function(error, response) {
         if (error) {
+            console.log(error);
             sentryClient.captureMessage(error);
             deferred.reject(error);
         }
-        deferred.resolve(true);
+        deferred.resolve(response);
     });
 
     return deferred.promise;
