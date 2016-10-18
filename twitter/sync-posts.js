@@ -31,13 +31,14 @@ var sentryClient = new raven.Client('https://666f957c7dd64957996c1b05675a960a:b9
 sentryClient.patchGlobal();
 
 // Get last 20 tweets for a particular user
-function getTweetsFromId(tweetId) {
+function getTweetFromId(tweetId) {
     var deferred = Q.defer();
 
     twitterClient.get('statuses/show', {
         id: tweetId
     }, function(error, tweet, response) {
         if (!error) {
+            console.log(tweet);
             deferred.resolve(tweet);
         } else {
             console.error(error);
@@ -47,6 +48,26 @@ function getTweetsFromId(tweetId) {
     });
 
     return deferred.promise;
+}
+
+function getTweetsFromIds(tweetIds) {
+    var allPromises = [];
+    for (var i = tweetIds.length - 1; i >= 0; i--) {
+        var toExecute = getTweetFromId(tweetIds[i].TwitterId);
+        allPromises.push(toExecute);
+    }
+    return Q.all(allPromises);
+}
+
+function groupTweetsByIds(tweetIds) {
+    var allPromises = [];
+    var i, j, temp, chunk = 100;
+    for (i = 0, j = tweetIds.length; i < j; i += chunk) {
+        temp = tweetIds.slice(i, i + chunk);
+        var toExecute = getTweetsFromIds(temp);
+        allPromises.push(toExecute);
+    } 
+    return Q.all(allPromises);
 }
 
 function syncTwitterAndES() {
@@ -65,8 +86,17 @@ function syncTwitterAndES() {
             tweetIds.push(tweet);
         }
 
-        // Go through each tweet and process it again
-        console.log(tweetIds.length);
+        var x = [tweetIds[0], tweetIds[1]];
+        console.log(x);
+
+        groupTweetsByIds(x).then(function (tweets) {
+            console.log(tweets.length);
+            console.log(tweets[0]);
+        }, function (error) {
+            sentryClient.captureMessage(error);
+            console.error(error);
+            deferred.reject(error);
+        });
     }, function (error) {
         sentryClient.captureMessage(error);
         console.error(error);
