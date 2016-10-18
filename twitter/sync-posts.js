@@ -200,7 +200,6 @@ function syncTwitterAndES() {
 
             // Add the data to elasticsearch
             addToElastic(allTweets, tweetIdsToESIdAndUsername).then(function(status) {
-                console.log(status);
                 deferred.resolve(status);
             }, function(error) {
                 sentryClient.captureMessage(error);
@@ -238,7 +237,7 @@ function runUpdates() {
             sentryClient.captureMessage(error);
             console.error(error);
         })
-    }, 60 * 60 * 1000);
+    }, 15 * 60 * 1000);
 }
 
 runUpdates();
