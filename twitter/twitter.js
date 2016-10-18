@@ -17,6 +17,48 @@ var elasticSearchClient = new elasticsearch.Client({
 
 var twitter = exports;
 
+function getTwitterUserPageFromEs(offset) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.search({
+        index: 'tweets',
+        type: 'user',
+        body: {
+            "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 100,
+            "from": 100 * offset,
+        }
+    }).then(function(resp) {
+        var hits = resp.hits.hits;
+        deferred.resolve(hits);
+    }, function(err) {
+        console.trace(err.message);
+    });
+
+    return deferred.promise;
+}
+
+function getTwitterProfilesFromEs(offset, allData) {
+    var deferred = Q.defer();
+
+    getTwitterUserPageFromEs(offset).then(function(data) {
+        if (data.length === 0) {
+            deferred.resolve(allData);
+        } else {
+            var newData = allData.concat(data);
+            deferred.resolve(getTwitterProfilesFromEs(offset + 1, newData));
+        }
+    });
+
+    return deferred.promise;
+}
+
 function getTweetPageFromEsLastWeek(offset) {
     var deferred = Q.defer();
 
@@ -77,3 +119,4 @@ function getTweetsFromEsLastWeek(offset, allData) {
 }
 
 twitter.getTweetsFromEsLastWeek = getTweetsFromEsLastWeek;
+twitter.getTwitterProfilesFromEs = getTwitterProfilesFromEs;
