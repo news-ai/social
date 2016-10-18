@@ -31,15 +31,14 @@ var sentryClient = new raven.Client('https://666f957c7dd64957996c1b05675a960a:b9
 sentryClient.patchGlobal();
 
 // Get last 20 tweets for a particular user
-function getTweetFromId(tweetId) {
+function getTweetsFromIds(tweetIds) {
     var deferred = Q.defer();
 
-    twitterClient.get('statuses/show', {
-        id: tweetId
-    }, function(error, tweet, response) {
+    twitterClient.get('statuses/lookup', {
+        id: tweetIds.join()
+    }, function(error, tweets, response) {
         if (!error) {
-            console.log(tweet);
-            deferred.resolve(tweet);
+            deferred.resolve(tweets);
         } else {
             console.error(error);
             sentryClient.captureMessage(error);
@@ -50,23 +49,16 @@ function getTweetFromId(tweetId) {
     return deferred.promise;
 }
 
-function getTweetsFromIds(tweetIds) {
-    var allPromises = [];
-    for (var i = tweetIds.length - 1; i >= 0; i--) {
-        var toExecute = getTweetFromId(tweetIds[i].TwitterId);
-        allPromises.push(toExecute);
-    }
-    return Q.all(allPromises);
-}
-
 function groupTweetsByIds(tweetIds) {
     var allPromises = [];
-    var i, j, temp, chunk = 100;
+
+    var i, j, temp, chunk = 99;
     for (i = 0, j = tweetIds.length; i < j; i += chunk) {
         temp = tweetIds.slice(i, i + chunk);
         var toExecute = getTweetsFromIds(temp);
         allPromises.push(toExecute);
-    } 
+    }
+
     return Q.all(allPromises);
 }
 
@@ -77,21 +69,13 @@ function syncTwitterAndES() {
     twitter.getTweetsFromEsLastWeek(0, []).then(function(data) {
         // Find the tweets from Twitter API
         console.log(data.length);
-        var tweetIds = []
+        var tweetIds = [];
         for (var i = 0; i < data.length; i++) {
-            var tweet = {
-                'ESId': data[i]._id,
-                'TwitterId': data[i]._source.data.TweetIdStr
-            };
-            tweetIds.push(tweet);
+            tweetIds.push(data[i]._source.data.TweetIdStr);
         }
 
-        var x = [tweetIds[0], tweetIds[1]];
-        console.log(x);
-
-        groupTweetsByIds(x).then(function (tweets) {
+        groupTweetsByIds(tweetIds).then(function (tweets) {
             console.log(tweets.length);
-            console.log(tweets[0]);
         }, function (error) {
             sentryClient.captureMessage(error);
             console.error(error);
