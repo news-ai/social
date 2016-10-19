@@ -34,6 +34,8 @@ var twitterClient = new Twitter({
     access_token_secret: 'NIYOhbJZSFzKNRJGVdtPlzMnzKet9bHdwH08ghw9TmzWr'
 });
 
+var twitterTimeseries = require('../time-series/twitter');
+
 // Get a Google Cloud topic
 function getTopic(cb) {
     pubsub.createTopic(topicName, function(err, topic) {
@@ -198,7 +200,15 @@ function followOnTwitter(user) {
             sentryClient.captureMessage(error);
             deferred.reject(error);   
         }
-        deferred.resolve(true);
+
+        // Add user to timeseries
+        var twitterProfile = [user]
+        twitterTimeseries.addTwitterUsersToTimeSeries(twitterProfile).then(function (status) {
+            deferred.resolve(status);
+        }, function (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        }); 
     });
 
     return deferred.promise;
