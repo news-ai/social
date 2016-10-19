@@ -6,10 +6,7 @@
 var Q = require('q');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
-var Twitter = require('twitter');
 var raven = require('raven');
-
-var twitter = require('./twitter');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -20,12 +17,12 @@ var elasticSearchClient = new elasticsearch.Client({
 
 var instagram = exports;
 
-function getTwitterUserTimeseiesFromEs(elasticId) {
+function getInstagramUserTimeseiesFromEs(elasticId) {
     var deferred = Q.defer();
 
     elasticSearchClient.get({
         index: 'timeseries',
-        type: 'twitter',
+        type: 'instagram',
         id: elasticId
     }).then(function(resp) {
         var hits = resp.hits.hits;
@@ -47,7 +44,7 @@ function addInstagramToUserTimeseries(instagramPost, username) {
     indexRecord = {
         index: {
             _index: 'timeseries',
-            _type: 'twitter',
+            _type: 'instagram',
             _id: userIndex
         }
     };
