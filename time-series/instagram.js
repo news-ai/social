@@ -41,8 +41,6 @@ function addInstagramToUserTimeseries(instagramProfile) {
     var today = moment().format('YYYY-MM-DD');
     var userIndex = username + '-' + today;
 
-    console.log(instagramProfile);
-
     var newElasticData = {
         Username: username,
         CreatedAt: today,
