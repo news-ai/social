@@ -10,6 +10,7 @@ var Twitter = require('twitter');
 var raven = require('raven');
 
 var twitter = require('./twitter');
+var twitterTimeseries = require('../time-series/twitter');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -66,16 +67,17 @@ function addToElastic(userProfiles) {
     return deferred.promise;
 }
 
-// Get last 20 tweets for a particular user
+// Profiles from Twitter
 function getTwitterProfilesFromUsernames(twitterUsernames) {
     var deferred = Q.defer();
 
     twitterClient.get('users/lookup', {
         screen_name: twitterUsernames.join()
-    }, function(error, tweets, response) {
+    }, function(error, twitterProfiles, response) {
         if (!error) {
-            deferred.resolve(tweets);
+            deferred.resolve(twitterProfiles);
         } else {
+            console.log(response);
             console.error(error);
             sentryClient.captureMessage(error);
             deferred.reject(new Error(error));
@@ -115,7 +117,13 @@ function syncTwitterAndES() {
 
             // Add the data to elasticsearch
             addToElastic(allProfiles).then(function(status) {
-                deferred.resolve(status);
+                console.log('Number of Twitter profiles in ES: ' + allProfiles.length);
+                twitterTimeseries.addTwitterUsersToTimeSeries(allProfiles).then(function (status) {
+                    deferred.resolve(status);
+                }, function (error) {
+                    sentryClient.captureMessage(error);
+                    deferred.reject(error);
+                })
             }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
@@ -135,7 +143,11 @@ function runUpdates() {
     // Run one initially -- mostly for when testing
     console.log('Beginning run');
     syncTwitterAndES().then(function(status) {
-        console.log(status);
+        for (var i = 0; i < status.length; i++) {
+            if (status[i].errors) {
+                console.log(status[i].items);
+            }
+        }
     }, function(error) {
         console.error(error);
     })
