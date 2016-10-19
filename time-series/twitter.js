@@ -40,18 +40,28 @@ function addTwitterToUserTimeseries(twitterPost, username) {
     var today = moment().format('YYYY-MM-DD');
     var userIndex = username + '-' + today;
 
-    var esActions = [];
-    indexRecord = {
-        index: {
-            _index: 'timeseries',
-            _type: 'twitter',
-            _id: userIndex
+    getTwitterUserTimeseiesFromEs(userIndex).then(function (elasticData){
+
+        var newElasticData = {
+            Username: username,
+            CreatedAt: today
         }
-    };
-    dataRecord = twitterPost;
-    esActions.push(indexRecord);
-    esActions.push({
-        data: dataRecord
+
+        var esActions = [];
+        var indexRecord = {
+            index: {
+                _index: 'timeseries',
+                _type: 'twitter',
+                _id: userIndex
+            }
+        };
+        var dataRecord = newElasticData;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+    }, function (error) {
+        console.log(error);
     });
 
     return deferred.promise;

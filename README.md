@@ -74,6 +74,11 @@ Pub/Sub call:
 - `sync-profiles.js` does not take any arguments. It reads from `/instagrams/user/_search` on ES.
 - `stream-instagram.js`
 
+### Timeseries
+
+- `twitter.js`
+- `instagram.js`
+
 ### Compute Engine
 
 `gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
