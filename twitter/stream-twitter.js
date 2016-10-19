@@ -73,7 +73,7 @@ function addTweetToEs(tweet, username) {
         'Place': tweet.place && tweet.place.full_name || '',
         'Coordinates': coordinates,
         'Retweeted': isRetweeted,
-        'CreatedAt': moment.unix(parseInt(tweet.timestamp_ms, 10) * 0.001).format('YYYY-MM-DDTHH:mm:ss')
+        'CreatedAt': moment(tweet.created_at).format('YYYY-MM-DDTHH:mm:ss')
     };
 
     var indexRecord = {

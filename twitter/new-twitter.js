@@ -118,7 +118,7 @@ function addToElastic(username, tweets) {
             'Place': tweets[i].place && tweets[i].place.full_name || '',
             'Coordinates': coordinates,
             'Retweeted': isRetweeted,
-            'CreatedAt': moment.unix(parseInt(tweets[i].timestamp_ms, 10) * 0.001).format('YYYY-MM-DDTHH:mm:ss') // damn you Twitter and your dates
+            'CreatedAt': moment(tweets[i].created_at).format('YYYY-MM-DDTHH:mm:ss') // damn you Twitter and your dates
         });
     }
 
