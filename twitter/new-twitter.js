@@ -169,22 +169,18 @@ function addToElastic(username, tweets) {
         data: dataRecord
     });
 
-    console.log(esActions);
-
     elasticSearchClient.bulk({
         body: esActions
     }, function(error, response) {
-        if (error) {
+        if (error || response && response.errors) {
+            if (!error) {
+                error = 'Could not send data to ES';
+            }
             sentryClient.captureMessage(error);
             deferred.reject(error);
+        } else {
+            deferred.resolve(user);
         }
-        console.log(response);
-        if (response.items) {
-            for (var i = 0; i < response.items.length; i++) {
-                console.log(response.items[i]);
-            }
-        }
-        deferred.resolve(user);
     });
 
     return deferred.promise;
