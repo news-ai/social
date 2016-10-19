@@ -169,6 +169,8 @@ function addToElastic(username, tweets) {
         data: dataRecord
     });
 
+    console.log(esActions);
+
     elasticSearchClient.bulk({
         body: esActions
     }, function(error, response) {
@@ -176,6 +178,7 @@ function addToElastic(username, tweets) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         }
+        console.log(response);
         deferred.resolve(user);
     });
 
