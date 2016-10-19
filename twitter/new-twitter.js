@@ -179,6 +179,11 @@ function addToElastic(username, tweets) {
             deferred.reject(error);
         }
         console.log(response);
+        if (response.items) {
+            for (var i = 0; i < response.items.length; i++) {
+                console.log(response.items[i]);
+            }
+        }
         deferred.resolve(user);
     });
 
