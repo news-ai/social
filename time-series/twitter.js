@@ -42,6 +42,8 @@ function getTwitterUserTimeseiesFromEs(elasticId) {
 }
 
 function addDataToElasticsearch(userIndex, newElasticData) {
+    var deferred = Q.defer();
+    
     var esActions = [];
     var indexRecord = {
         index: {
