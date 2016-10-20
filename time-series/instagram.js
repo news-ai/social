@@ -27,7 +27,7 @@ function getInstagramUserTimeseiesFromEs(elasticId) {
     elasticSearchClient.get({
         index: 'timeseries',
         type: 'instagram',
-        id: elasticId
+        id: elasticId.toLowerCase()
     }).then(function(resp) {
         if (resp.found) {
             deferred.resolve(resp._source.data);
@@ -49,7 +49,7 @@ function addInstagramToUserTimeseries(userIndex, newElasticData) {
         index: {
             _index: 'timeseries',
             _type: 'instagram',
-            _id: userIndex
+            _id: userIndex.toLowerCase()
         }
     };
     var dataRecord = newElasticData;
@@ -189,7 +189,7 @@ function addInstagramPostsToTimeSeries(instagramPosts) {
 
     var instagramPostKeys = Object.keys(usernameToInstagramPosts);
     for (var i = 0; i < instagramPostKeys.length; i++) {
-        var instagramUsername = instagramPostKeys[i];
+        var instagramUsername = instagramPostKeys[i].toLowerCase();
         var toExecute = addInstagramPostToTimeseries(instagramUsername, usernameToInstagramPosts[instagramUsername]);
         allPromises.push(toExecute);
     }

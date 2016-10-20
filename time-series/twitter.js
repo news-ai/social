@@ -49,7 +49,7 @@ function addDataToElasticsearch(userIndex, newElasticData) {
         index: {
             _index: 'timeseries',
             _type: 'twitter',
-            _id: userIndex
+            _id: userIndex.toLowerCase()
         }
     };
 
@@ -179,7 +179,7 @@ function addTwitterPostsToTimeSeries(twitterPosts) {
     var usernameToTwitterPosts = {};
     for (var i = 0; i < twitterPosts.length; i++) {
         // Filter down for posts only posted today
-        var username = twitterPosts[i].user.screen_name;
+        var username = twitterPosts[i].user.screen_name.toLowerCase();
         if (today.diff(moment(twitterPosts[i].created_at), 'days') === 0) {
             if (!(username in usernameToTwitterPosts)) {
                 usernameToTwitterPosts[username] = []
@@ -190,7 +190,7 @@ function addTwitterPostsToTimeSeries(twitterPosts) {
 
     var twitterPostKeys = Object.keys(usernameToTwitterPosts);
     for (var i = 0; i < twitterPostKeys.length; i++) {
-        var twitterUsername = twitterPostKeys[i];
+        var twitterUsername = twitterPostKeys[i].toLowerCase();
         var toExecute = addTwitterPostToTimeseries(twitterUsername, usernameToTwitterPosts[twitterUsername]);
         allPromises.push(toExecute);
     }
