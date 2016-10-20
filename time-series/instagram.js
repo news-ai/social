@@ -116,6 +116,7 @@ function addInstagramUserToExistingTimeseries(userIndex, newElasticData) {
     var deferred = Q.defer();
 
     getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
+        console.log(data);
         if (data && data.Followers && data.Following) {
             newElasticData.Followers = data.Followers;
             newElasticData.Following = data.Following;
@@ -142,8 +143,6 @@ function addInstagramUsersToTimeSeries(userProfiles) {
 
     for (var i = 0; i < userProfiles.data.length; i++) {
         var instagramProfile = userProfiles.data[i];
-
-        console.log(instagramProfile);
 
         var username = instagramProfile.username.toLowerCase();
         var today = moment().format('YYYY-MM-DD');
