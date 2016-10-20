@@ -108,6 +108,18 @@ function addInstagramUserToExistingTimeseries(userIndex, newElasticData) {
         data.Followers = newElasticData.Followers;
         data.Following = newElasticData.Following;
 
+        if (!data.Likes) {
+            data.Likes = 0
+        }
+
+        if (!data.Comments) {
+            data.Comments = 0
+        }
+
+        if (!data.Posts) {
+            data.Posts = 0
+        }
+
         addInstagramToUserTimeseries(userIndex, data).then(function (status) {
             deferred.resolve(status);
         }, function (error) {
