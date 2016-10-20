@@ -13,6 +13,7 @@ var moment = require('moment');
 var raven = require('raven');
 
 var instagram = require('./instagram');
+var instagramTimeseries = require('../time-series/instagram');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -419,7 +420,16 @@ function processInstagramUser(data) {
                 // Add instagram posts to elasticsearch
                 addToElastic(data.username, instagramIdAndPosts[1], profile, false).then(function(status) {
                     if (status) {
-                        deferred.resolve(status);
+                        // Process the user to be added to Timeseries
+                        var userProfiles = {
+                            data: [profile.data]
+                        };
+                        instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function (tsStatus) {
+                            deferred.resolve(tsStatus);
+                        }, function (error) {
+                            sentryClient.captureMessage(error);
+                            deferred.reject(error);
+                        })
                     } else {
                         var error = 'Could not add instagram posts to ES'
                         sentryClient.captureMessage(error);
