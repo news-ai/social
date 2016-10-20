@@ -97,7 +97,7 @@ function addInstagramPostToTimeseries(username, posts) {
     };
 
     getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
-        if (data) {
+        if (data && data.Followers && data.Following) {
             newElasticData.Followers = data.Followers;
             newElasticData.Following = data.Following;
         }
