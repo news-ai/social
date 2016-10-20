@@ -48,7 +48,6 @@ function addTwitterToUserTimeSeries(twitterProfile) {
     var today = moment().format('YYYY-MM-DD');
     var userIndex = username + '-' + today;
 
-
     var newElasticData = {
         Username: username,
         CreatedAt: today,
@@ -89,7 +88,8 @@ function addTwitterToUserTimeSeries(twitterProfile) {
             deferred.resolve(response);
         });
     }, function (error) {
-        console.log(error);
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
     });
 
     return deferred.promise;
@@ -106,4 +106,24 @@ function addTwitterUsersToTimeSeries(userProfiles) {
     return Q.all(allPromises);
 }
 
+function addTwitterPostsToTimeSeries(twitterPosts) {
+    var allPromises = [];
+
+    var today = moment();
+    var usernameToTwitterPosts = {};
+    for (var i = 0; i < twitterPosts.length; i++) {
+        // Filter down for posts only posted today
+        var username = twitterPosts[i].user.screen_name;
+        if (today.diff(moment(twitterPosts[i].created_at), 'days') === 0) {
+            if (!(username in usernameToTwitterPosts)) {
+                usernameToTwitterPosts[username] = []
+            }
+            usernameToTwitterPosts[username].push(twitterPosts[i]);
+        }
+    }
+
+    return Q.all(allPromises);
+}
+
 twitter.addTwitterUsersToTimeSeries = addTwitterUsersToTimeSeries;
+twitter.addTwitterPostsToTimeSeries = addTwitterPostsToTimeSeries;

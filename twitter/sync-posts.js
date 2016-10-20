@@ -10,6 +10,7 @@ var Twitter = require('twitter');
 var raven = require('raven');
 
 var twitter = require('./twitter');
+var twitterTimeseries = require('../time-series/twitter');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -201,7 +202,13 @@ function syncTwitterAndES() {
 
             // Add the data to elasticsearch
             addToElastic(allTweets, tweetIdsToESIdAndUsername).then(function(status) {
-                deferred.resolve(status);
+                twitterTimeseries.addTwitterPostsToTimeSeries(allTweets).then(function (timeseriesData) {
+                    deferred.resolve(timeseriesData);
+                }, function (error) {
+                    sentryClient.captureMessage(error);
+                    console.error(error);
+                    deferred.reject(error);
+                });
             }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
