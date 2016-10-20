@@ -74,7 +74,7 @@ function addDataToElasticsearch(userIndex, newElasticData) {
 function addTwitterToUserTimeSeries(twitterProfile) {
     var deferred = Q.defer();
 
-    var username = twitterProfile.screen_name.toLowerCase();
+    var username = twitterProfile.screen_name && twitterProfile.screen_name.toLowerCase();
     var today = moment().format('YYYY-MM-DD');
     var userIndex = username + '-' + today;
 
@@ -119,7 +119,7 @@ function addTwitterPostToTimeseries(username, posts) {
     var numberofRetweets = 0;
 
     for (var i = 0; i < posts.length; i++) {
-        if (!posts[i].retweeted) {
+        if (!posts[i].retweeted_status) {
             numberOfLikes += posts[i].favorite_count;
             numberofRetweets += posts[i].retweet_count;
         } else {
