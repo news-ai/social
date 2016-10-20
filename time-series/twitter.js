@@ -68,6 +68,8 @@ function addDataToElasticsearch(userIndex, newElasticData) {
         }
         deferred.resolve(response);
     });
+
+    return deferred.promise;
 }
 
 
