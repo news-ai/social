@@ -41,6 +41,34 @@ function getTwitterUserTimeseiesFromEs(elasticId) {
     return deferred.promise;
 }
 
+function addDataToElasticsearch(userIndex, newElasticData) {
+    var esActions = [];
+    var indexRecord = {
+        index: {
+            _index: 'timeseries',
+            _type: 'twitter',
+            _id: userIndex
+        }
+    };
+
+    var dataRecord = newElasticData;
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
+    });
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        }
+        deferred.resolve(response);
+    });
+}
+
+
 function addTwitterToUserTimeSeries(twitterProfile) {
     var deferred = Q.defer();
 
@@ -54,40 +82,76 @@ function addTwitterToUserTimeSeries(twitterProfile) {
         Followers: twitterProfile.followers_count,
         Following: twitterProfile.friends_count,
         Likes: 0,
-        Retweets: 0
+        Retweets: 0,
+        Posts: 0
     };
 
-    getTwitterUserTimeseiesFromEs(userIndex).then(function (data){
+    getTwitterUserTimeseiesFromEs(userIndex).then(function(data){
         if (data && data.Likes && data.Retweets) {
             newElasticData.Likes = data.Likes;
             newElasticData.Retweets = data.Retweets;
         }
 
-        var esActions = [];
-        var indexRecord = {
-            index: {
-                _index: 'timeseries',
-                _type: 'twitter',
-                _id: userIndex
-            }
-        };
-
-        var dataRecord = newElasticData;
-        esActions.push(indexRecord);
-        esActions.push({
-            data: dataRecord
-        });
-
-        elasticSearchClient.bulk({
-            body: esActions
-        }, function(error, response) {
-            if (error) {
-                sentryClient.captureMessage(error);
-                deferred.reject(error);
-            }
-            deferred.resolve(response);
+        addDataToElasticsearch(userIndex, newElasticData).then(function(status) {
+            deferred.resolve(status);
+        }, function (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
         });
     }, function (error) {
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
+    });
+
+    return deferred.promise;
+}
+
+function addTwitterPostToTimeseries(username, posts) {
+    var deferred = Q.defer();
+
+    var today = moment().format('YYYY-MM-DD');
+    var userIndex = username + '-' + today;
+
+    var numberOfPosts = posts.length;
+    var numberOfLikes = 0;
+    var numberofRetweets = 0;
+
+    for (var i = 0; i < posts.length; i++) {
+        if (!posts[i].retweeted) {
+            numberOfLikes += posts[i].favorite_count;
+            numberofRetweets += posts[i].retweet_count;
+        } else {
+            // Remove posts that were retweeted
+            numberOfPosts -= 1;
+        }
+    }
+
+    var newElasticData = {
+        Username: username,
+        CreatedAt: today,
+        Followers: 0,
+        Following: 0,
+        Likes: numberOfLikes,
+        Retweets: numberofRetweets,
+        Posts: numberOfPosts
+    };
+
+    getTwitterUserTimeseiesFromEs(userIndex).then(function(data) {
+        if (data && data.Followers && data.Following) {
+            newElasticData.Followers = data.Followers;
+            newElasticData.Following = data.Following;
+        }
+
+        // Add to elasticsearch
+        addDataToElasticsearch(userIndex, newElasticData).then(function(status) {
+            deferred.resolve(status);
+        }, function (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        });
+
+    }, function (error) {
+        console.error(error);
         sentryClient.captureMessage(error);
         deferred.reject(error);
     });
@@ -120,6 +184,13 @@ function addTwitterPostsToTimeSeries(twitterPosts) {
             }
             usernameToTwitterPosts[username].push(twitterPosts[i]);
         }
+    }
+
+    var twitterPostKeys = Object.keys(usernameToTwitterPosts);
+    for (var i = 0; i < twitterPostKeys.length; i++) {
+        var twitterUsername = twitterPostKeys[i];
+        var toExecute = addTwitterPostToTimeseries(twitterUsername, usernameToTwitterPosts[twitterUsername]);
+        allPromises.push(toExecute);
     }
 
     return Q.all(allPromises);
