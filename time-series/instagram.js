@@ -25,8 +25,11 @@ function getInstagramUserTimeseiesFromEs(elasticId) {
         type: 'instagram',
         id: elasticId
     }).then(function(resp) {
-        var hits = resp.hits.hits;
-        deferred.resolve(hits);
+        if (resp.found) {
+            deferred.resolve(resp._source.data);
+        } else {
+            deferred.resolve({});
+        }
     }, function(err) {
         console.trace(err.message);
     });
@@ -75,6 +78,21 @@ function addInstagramToUserTimeseries(instagramProfile) {
     return deferred.promise;
 }
 
+function addInstagramPostToTimeseries(username, posts) {
+    var deferred = Q.defer();
+
+    var today = moment().format('YYYY-MM-DD');
+    var userIndex = username + '-' + today;
+
+    getInstagramUserTimeseiesFromEs(userIndex).then(function(data) { 
+        console.log(data);
+    }, function (error) {
+        console.error(error);
+    });
+
+    return deferred.promise;
+}
+
 function addInstagramUsersToTimeSeries(userProfiles) {
     var allPromises = [];
 
@@ -86,4 +104,32 @@ function addInstagramUsersToTimeSeries(userProfiles) {
     return Q.all(allPromises);
 }
 
+function addInstagramPostsToTimeSeries(instagramPosts) {
+    var allPromises = [];
+
+    instagramPosts = instagramPosts.data;
+
+    var today = moment();
+    var usernameToInstagramPosts = {};
+    for (var i = 0; i < instagramPosts.length; i++) {
+        // Filter down for posts only posted today
+        if (today.diff(moment(instagramPosts[i].CreatedAt), 'days') === 0) {
+            if (!(instagramPosts[i].Username in usernameToInstagramPosts)) {
+                usernameToInstagramPosts[instagramPosts[i].Username] = []
+            }
+            usernameToInstagramPosts[instagramPosts[i].Username].push(instagramPosts[i]);
+        }
+    }
+
+    var instagramPostKeys = Object.keys(usernameToInstagramPosts);
+    for (var i = 0; i < instagramPostKeys.length; i++) {
+        var instagramUsername = instagramPostKeys[i];
+        var toExecute = addInstagramPostToTimeseries(instagramUsername, usernameToInstagramPosts[instagramUsername]);
+        allPromises.push(toExecute);
+    }
+
+    return Q.all(allPromises);
+}
+
 instagram.addInstagramUsersToTimeSeries = addInstagramUsersToTimeSeries;
+instagram.addInstagramPostsToTimeSeries = addInstagramPostsToTimeSeries;

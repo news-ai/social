@@ -11,6 +11,7 @@ var moment = require('moment');
 var raven = require('raven');
 
 var instagram = require('./instagram');
+var instagramTimeseries = require('../time-series/instagram');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -133,19 +134,24 @@ function syncIGAndES() {
             };
 
             addToElastic(posts).then(function(status) {
-                rp('https://hchk.io/c2b028ef-a86c-4609-8e62-6af6deeed6c4')
-                    .then(function(htmlString) {
-                        deferred.resolve(status);
-                    })
-                    .catch(function(err) {
-                        sentryClient.captureMessage(err);
-                        console.error(err);
-                        deferred.reject(err);
-                    });
+                instagramTimeseries.addInstagramPostsToTimeSeries(posts).then(function (timeseriesStatus) {
+                    rp('https://hchk.io/c2b028ef-a86c-4609-8e62-6af6deeed6c4')
+                        .then(function(htmlString) {
+                            deferred.resolve(timeseriesStatus);
+                        })
+                        .catch(function(err) {
+                            sentryClient.captureMessage(err);
+                            console.error(err);
+                            deferred.reject(err);
+                        });
+                }, function (error) {
+                    sentryClient.captureMessage(error);
+                    deferred.reject(error);
+                });
             }, function(error) {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
-            })
+            });
         }, function (error) {
             sentryClient.captureMessage(error);
             console.error(error);

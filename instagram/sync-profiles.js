@@ -112,10 +112,10 @@ function syncIGAndES() {
                         .then(function(htmlString) {
                             deferred.resolve(esStatus);
                         })
-                        .catch(function(err) {
-                            sentryClient.captureMessage(err);
-                            console.error(err);
-                            deferred.reject(err);
+                        .catch(function(error) {
+                            sentryClient.captureMessage(error);
+                            console.error(error);
+                            deferred.reject(error);
                         });
                 }, function (error) {
                     sentryClient.captureMessage(error);
@@ -147,6 +147,7 @@ function runUpdates() {
     syncIGAndES().then(function(status) {
         console.log(status);
     }, function(error) {
+        sentryClient.captureMessage(error);
         console.error(error);
     })
 
