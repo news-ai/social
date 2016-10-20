@@ -15,6 +15,10 @@ var elasticSearchClient = new elasticsearch.Client({
     rejectUnauthorized: false
 });
 
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://01a37de7973341628dc29671ba8b7933:382639f851304ae98f55960f242e192b@sentry.io/107549');
+sentryClient.patchGlobal();
+
 var instagram = exports;
 
 function getInstagramUserTimeseiesFromEs(elasticId) {

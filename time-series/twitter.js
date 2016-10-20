@@ -15,6 +15,10 @@ var elasticSearchClient = new elasticsearch.Client({
     rejectUnauthorized: false
 });
 
+// Instantiate a sentry client
+var sentryClient = new raven.Client('https://bcccc887a5d34c148c8dbeacf51714ef:5b7ee6188efb40c1820789a3e383ce7a@sentry.io/107550');
+sentryClient.patchGlobal();
+
 var twitter = exports;
 
 function getTwitterUserTimeseiesFromEs(elasticId) {
