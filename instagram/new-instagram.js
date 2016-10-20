@@ -408,6 +408,19 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
     return [user, posts];
 }
 
+function formatForTimeseries(instagramUser) {
+    return {
+        'Username': instagramUser.username,
+        'username': instagramUser.username,
+        'followed_by': {
+            'count': instagramUser.counts && instagramUser.counts.followed_by || 0
+        },
+        'follows': {
+            'count': instagramUser.counts && instagramUser.counts.follows || 0
+        }
+    }
+}
+
 // Process a particular Instagram user
 function processInstagramUser(data) {
     var deferred = Q.defer();
@@ -422,14 +435,14 @@ function processInstagramUser(data) {
                     if (status) {
                         // Process the user to be added to Timeseries
                         var userProfiles = {
-                            data: [profile.data]
+                            data: [formatForTimeseries(profile.data)]
                         };
                         instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function (tsStatus) {
                             deferred.resolve(tsStatus);
                         }, function (error) {
                             sentryClient.captureMessage(error);
                             deferred.reject(error);
-                        })
+                        });
                     } else {
                         var error = 'Could not add instagram posts to ES'
                         sentryClient.captureMessage(error);
@@ -454,7 +467,16 @@ function processInstagramUser(data) {
             // Add instagram posts to elasticsearch
             addToElastic(data.username, instagramUserAndPosts[1], instagramUserAndPosts[0], true).then(function(status) {
                 if (status) {
-                    deferred.resolve(status);
+                    // Process the user to be added to Timeseries
+                    var userProfiles = {
+                        data: [formatForTimeseries(instagramUserAndPosts[0].data)]
+                    };
+                    instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function (tsStatus) {
+                        deferred.resolve(tsStatus);
+                    }, function (error) {
+                        sentryClient.captureMessage(error);
+                        deferred.reject(error);
+                    });
                 } else {
                     var error = 'Could not add instagram posts to ES'
                     sentryClient.captureMessage(error);
