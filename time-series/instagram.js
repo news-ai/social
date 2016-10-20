@@ -31,7 +31,7 @@ function getInstagramUserTimeseiesFromEs(elasticId) {
             deferred.resolve({});
         }
     }, function(err) {
-        console.trace(err.message);
+        deferred.resolve({});
     });
 
     return deferred.promise;
@@ -82,12 +82,23 @@ function addInstagramPostToTimeseries(username, posts) {
         numberofComments += posts[i].Comments;
     }
 
-    getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
-        data.Likes = numberOfLikes;
-        data.Comments = numberofComments;
-        data.Posts = numberOfPosts;
+    var newElasticData = {
+        Username: username,
+        CreatedAt: today,
+        Likes: numberOfLikes,
+        Comments: numberofComments,
+        Posts: numberOfPosts,
+        Followers: 0,
+        Following: 0
+    };
 
-        addInstagramToUserTimeseries(userIndex, data).then(function (status) {
+    getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
+        if (data) {
+            newElasticData.Followers = data.Followers;
+            newElasticData.Following = data.Following;
+        }
+
+        addInstagramToUserTimeseries(userIndex, newElasticData).then(function (status) {
             deferred.resolve(status);
         }, function (error) {
             console.error(error);
@@ -105,22 +116,12 @@ function addInstagramUserToExistingTimeseries(userIndex, newElasticData) {
     var deferred = Q.defer();
 
     getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
-        data.Followers = newElasticData.Followers;
-        data.Following = newElasticData.Following;
-
-        if (!data.Likes) {
-            data.Likes = 0
+        if (data) {
+            newElasticData.Followers = data.Followers;
+            newElasticData.Following = data.Following;
         }
 
-        if (!data.Comments) {
-            data.Comments = 0
-        }
-
-        if (!data.Posts) {
-            data.Posts = 0
-        }
-
-        addInstagramToUserTimeseries(userIndex, data).then(function (status) {
+        addInstagramToUserTimeseries(userIndex, newElasticData).then(function (status) {
             deferred.resolve(status);
         }, function (error) {
             console.error(error);
@@ -150,7 +151,10 @@ function addInstagramUsersToTimeSeries(userProfiles) {
             Username: username,
             CreatedAt: today,
             Followers: instagramProfile.followed_by && instagramProfile.followed_by.count || 0,
-            Following: instagramProfile.follows && instagramProfile.follows.count || 0
+            Following: instagramProfile.follows && instagramProfile.follows.count || 0,
+            Likes: 0,
+            Comments: 0,
+            Posts: 0
         };
 
         var toExecute = addInstagramUserToExistingTimeseries(userIndex, newElasticData);
