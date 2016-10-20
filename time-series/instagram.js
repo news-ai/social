@@ -37,19 +37,8 @@ function getInstagramUserTimeseiesFromEs(elasticId) {
     return deferred.promise;
 }
 
-function addInstagramToUserTimeseries(instagramProfile) {
+function addInstagramToUserTimeseries(userIndex, newElasticData) {
     var deferred = Q.defer();
-
-    var username = instagramProfile.username.toLowerCase();
-    var today = moment().format('YYYY-MM-DD');
-    var userIndex = username + '-' + today;
-
-    var newElasticData = {
-        Username: username,
-        CreatedAt: today,
-        Followers: instagramProfile.followed_by && instagramProfile.followed_by.count || 0,
-        Following: instagramProfile.follows && instagramProfile.follows.count || 0
-    };
 
     var esActions = [];
     var indexRecord = {
@@ -84,10 +73,52 @@ function addInstagramPostToTimeseries(username, posts) {
     var today = moment().format('YYYY-MM-DD');
     var userIndex = username + '-' + today;
 
-    getInstagramUserTimeseiesFromEs(userIndex).then(function(data) { 
-        console.log(data);
+    var numberOfPosts = posts.length;
+    var numberOfLikes = 0;
+    var numberofComments = 0;
+
+    for (var i = 0; i < posts.length; i++) {
+        numberOfLikes += posts[i].Likes;
+        numberofComments += posts[i].Comments;
+    }
+
+    getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
+        data.Likes = numberOfLikes;
+        data.Comments = numberofComments;
+        data.Posts = numberOfPosts;
+
+        addInstagramToUserTimeseries(userIndex, data).then(function (status) {
+            deferred.resolve(status);
+        }, function (error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        });
     }, function (error) {
         console.error(error);
+    });
+
+    return deferred.promise;
+}
+
+function addInstagramUserToExistingTimeseries(userIndex, newElasticData) {
+    var deferred = Q.defer();
+
+    getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
+        data.Followers = newElasticData.Followers;
+        data.Following = newElasticData.Following;
+
+        addInstagramToUserTimeseries(userIndex, data).then(function (status) {
+            deferred.resolve(status);
+        }, function (error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        });
+    }, function (error) {
+        console.error(error);
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
     });
 
     return deferred.promise;
@@ -97,7 +128,20 @@ function addInstagramUsersToTimeSeries(userProfiles) {
     var allPromises = [];
 
     for (var i = 0; i < userProfiles.data.length; i++) {
-        var toExecute = addInstagramToUserTimeseries(userProfiles.data[i]);
+        var instagramProfile = userProfiles.data[i];
+
+        var username = instagramProfile.username.toLowerCase();
+        var today = moment().format('YYYY-MM-DD');
+        var userIndex = username + '-' + today;
+
+        var newElasticData = {
+            Username: username,
+            CreatedAt: today,
+            Followers: instagramProfile.followed_by && instagramProfile.followed_by.count || 0,
+            Following: instagramProfile.follows && instagramProfile.follows.count || 0
+        };
+
+        var toExecute = addInstagramUserToExistingTimeseries(userIndex, newElasticData);
         allPromises.push(toExecute);
     }
 
