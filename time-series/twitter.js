@@ -91,9 +91,10 @@ function addTwitterToUserTimeSeries(twitterProfile) {
     };
 
     getTwitterUserTimeseiesFromEs(userIndex).then(function(data){
-        if (data && data.Likes && data.Retweets) {
+        if (data && data.Likes && data.Retweets && data.Posts) {
             newElasticData.Likes = data.Likes;
             newElasticData.Retweets = data.Retweets;
+            newElasticData.Posts = data.Posts;
         }
 
         addDataToElasticsearch(userIndex, newElasticData).then(function(status) {
@@ -116,7 +117,7 @@ function addTwitterPostToTimeseries(username, posts) {
     var today = moment().format('YYYY-MM-DD');
     var userIndex = username + '-' + today;
 
-    var numberOfPosts = posts.length;
+    var numberOfPosts = 0;
     var numberOfLikes = 0;
     var numberofRetweets = 0;
 
@@ -124,9 +125,7 @@ function addTwitterPostToTimeseries(username, posts) {
         if (!posts[i].retweeted_status) {
             numberOfLikes += posts[i].favorite_count;
             numberofRetweets += posts[i].retweet_count;
-        } else {
-            // Remove posts that were retweeted
-            numberOfPosts -= 1;
+            numberOfPosts += 1;
         }
     }
 
