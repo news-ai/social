@@ -122,9 +122,9 @@ function addInstagramUserToExistingTimeseries(userIndex, newElasticData) {
     var deferred = Q.defer();
 
     getInstagramUserTimeseiesFromEs(userIndex).then(function(data) {
-        if (data && data.Followers && data.Following && data.Posts) {
-            newElasticData.Followers = data.Followers;
-            newElasticData.Following = data.Following;
+        if (data && data.Likes && data.Comments && data.Posts) {
+            newElasticData.Likes = data.Likes;
+            newElasticData.Comments = data.Comments;
             newElasticData.Posts = data.Posts;
         }
 
