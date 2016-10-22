@@ -107,7 +107,7 @@ function syncIGAndES() {
 
             addToElastic(profiles).then(function(status) {
                 // Sync data to instagram TimeSeries
-                instagramTimeseries.addInstagramUsersToTimeSeries(profiles).then(function (esStatus) {
+                instagramTimeseries.addInstagramUsersToTimeSeries(profiles).then(function(esStatus) {
                     rp('https://hchk.io/31a96c67-555f-47a0-b6e3-6ed4dc3980cf')
                         .then(function(htmlString) {
                             deferred.resolve(esStatus);
@@ -121,12 +121,12 @@ function syncIGAndES() {
                     sentryClient.captureMessage(error);
                     console.error(error);
                     deferred.reject(error);
-                })
+                });
             }, function(error) {
                 sentryClient.captureMessage(error);
                 console.error(error);
                 deferred.reject(error);
-            })
+            });
         }, function (error) {
             sentryClient.captureMessage(error);
             console.error(error);

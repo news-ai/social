@@ -5,6 +5,7 @@
 
 var Q = require('q');
 var elasticsearch = require('elasticsearch');
+var rp = require('request-promise');
 var moment = require('moment');
 var Twitter = require('twitter');
 var raven = require('raven');
@@ -112,15 +113,23 @@ function syncTwitterAndES() {
             twitterUsernames.push(data[i]._id);
         }
 
-        groupTwitterProfilesByUsernames(twitterUsernames).then(function (twitterProfiles) {
+        groupTwitterProfilesByUsernames(twitterUsernames).then(function(twitterProfiles) {
             var allProfiles = [].concat.apply([], twitterProfiles);
 
             // Add the data to elasticsearch
             addToElastic(allProfiles).then(function(status) {
                 console.log('Number of Twitter profiles in ES: ' + allProfiles.length);
-                twitterTimeseries.addTwitterUsersToTimeSeries(allProfiles).then(function (status) {
-                    deferred.resolve(status);
-                }, function (error) {
+                twitterTimeseries.addTwitterUsersToTimeSeries(allProfiles).then(function(status) {
+                    // Health check
+                    rp('https://hchk.io/56df6d0c-974f-4ffe-94b0-ee66cfad7977')
+                        .then(function(htmlString) {
+                            deferred.resolve(status);
+                        })
+                        .catch(function(error) {
+                            sentryClient.captureMessage(error);
+                            deferred.reject(error);
+                        });
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
                 })
@@ -130,7 +139,7 @@ function syncTwitterAndES() {
             });
         });
 
-    }, function (error) {
+    }, function(error) {
         sentryClient.captureMessage(error);
         console.error(error);
         deferred.reject(error);

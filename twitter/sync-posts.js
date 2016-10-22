@@ -5,6 +5,7 @@
 
 var Q = require('q');
 var elasticsearch = require('elasticsearch');
+var rp = require('request-promise');
 var moment = require('moment');
 var Twitter = require('twitter');
 var raven = require('raven');
@@ -203,7 +204,15 @@ function syncTwitterAndES() {
             // Add the data to elasticsearch
             addToElastic(allTweets, tweetIdsToESIdAndUsername).then(function(status) {
                 twitterTimeseries.addTwitterPostsToTimeSeries(allTweets).then(function (timeseriesData) {
-                    deferred.resolve(timeseriesData);
+                    // Health check
+                    rp('https://hchk.io/a58c62df-5369-4476-b2f2-6c309949a75a')
+                        .then(function(htmlString) {
+                            deferred.resolve(timeseriesData);
+                        })
+                        .catch(function(error) {
+                            sentryClient.captureMessage(error);
+                            deferred.reject(error);
+                        });
                 }, function (error) {
                     sentryClient.captureMessage(error);
                     console.error(error);
