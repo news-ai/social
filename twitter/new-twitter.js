@@ -198,17 +198,17 @@ function followOnTwitter(user) {
     }, function(error, response) {
         if (error) {
             sentryClient.captureMessage(error);
-            deferred.reject(error);   
+            deferred.reject(error);
         }
 
         // Add user to timeseries
         var twitterProfile = [user]
-        twitterTimeseries.addTwitterUsersToTimeSeries(twitterProfile).then(function (status) {
+        twitterTimeseries.addTwitterUsersToTimeSeries(twitterProfile).then(function(status) {
             deferred.resolve(status);
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
-        }); 
+        });
     });
 
     return deferred.promise;
@@ -310,10 +310,10 @@ subscribe(function(err, message) {
     processTwitterUser(message.data)
         .then(function(status) {
             rp('https://hchk.io/1a7203c6-1716-4933-bdc0-673c4cd2d7bd')
-                .then(function (htmlString) {
+                .then(function(htmlString) {
                     console.log('Completed execution for ' + message.data.username);
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                     console.error(err);
                 });
         }, function(error) {

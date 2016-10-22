@@ -1,7 +1,6 @@
 /*!
  * Looks for when people are posting new Instagram posts
  */
-
 'use strict';
 
 var Q = require('q');
@@ -49,17 +48,17 @@ function syncIGAndES() {
             };
             allData.push(currentData);
         }
-        sendInstagramProfileToPubsub(allData).then(function (status) {
+        sendInstagramProfileToPubsub(allData).then(function(status) {
             rp('https://hchk.io/92155727-1536-47d6-b3df-5eb558d5f561')
-            .then(function (htmlString) {
-                deferred.resolve(status);
-            })
-            .catch(function (err) {
-                console.error(err);
-                sentryClient.captureMessage(err);
-                deferred.reject(err);
-            });
-        }, function (error) {
+                .then(function(htmlString) {
+                    deferred.resolve(status);
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    sentryClient.captureMessage(err);
+                    deferred.reject(err);
+                });
+        }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
             deferred.reject(error);

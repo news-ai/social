@@ -198,12 +198,12 @@ function syncTwitterAndES() {
         }
 
         // Get tweets from Twitter
-        groupTweetsByIds(tweetIds).then(function (tweets) {
+        groupTweetsByIds(tweetIds).then(function(tweets) {
             var allTweets = [].concat.apply([], tweets);
 
             // Add the data to elasticsearch
             addToElastic(allTweets, tweetIdsToESIdAndUsername).then(function(status) {
-                twitterTimeseries.addTwitterPostsToTimeSeries(allTweets).then(function (timeseriesData) {
+                twitterTimeseries.addTwitterPostsToTimeSeries(allTweets).then(function(timeseriesData) {
                     // Health check
                     rp('https://hchk.io/a58c62df-5369-4476-b2f2-6c309949a75a')
                         .then(function(htmlString) {
@@ -213,7 +213,7 @@ function syncTwitterAndES() {
                             sentryClient.captureMessage(error);
                             deferred.reject(error);
                         });
-                }, function (error) {
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     console.error(error);
                     deferred.reject(error);
@@ -222,12 +222,12 @@ function syncTwitterAndES() {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
             deferred.reject(error);
         });
-    }, function (error) {
+    }, function(error) {
         sentryClient.captureMessage(error);
         console.error(error);
         deferred.reject(error);

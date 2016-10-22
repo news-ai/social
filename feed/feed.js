@@ -105,10 +105,10 @@ function runFeeds() {
         getLatestFeeds();
 
         rp('https://hchk.io/57057b83-2bf9-454d-ad35-547b6db86d81')
-            .then(function (htmlString) {
+            .then(function(htmlString) {
                 console.log('Completed execution');
             })
-            .catch(function (err) {
+            .catch(function(err) {
                 console.error(err);
             });
     }, 15 * 60 * 1000);

@@ -18,7 +18,7 @@ var elasticSearchClient = new elasticsearch.Client({
 
 var instagram = exports;
 
-instagram.formatToFeed = function (post, username) {
+instagram.formatToFeed = function(post, username) {
     return {
         'CreatedAt': post.CreatedAt,
         'Type': 'Instagram',
@@ -260,6 +260,7 @@ function subscribe(topicName, subscriptionName, cb) {
         }
     };
 }
+
 function addFeedToPubSub(topicName, pubData) {
     var deferred = Q.defer();
 
@@ -286,7 +287,6 @@ function addFeedToPubSub(topicName, pubData) {
 
     return deferred.promise;
 }
-
 
 instagram.getInstagramProfiles = getInstagramProfiles;
 instagram.getInstagramProfilesFromAPI = getInstagramProfilesFromAPI;

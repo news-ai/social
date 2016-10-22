@@ -43,7 +43,7 @@ function getTwitterUserTimeseiesFromEs(elasticId) {
 
 function addDataToElasticsearch(userIndex, newElasticData) {
     var deferred = Q.defer();
-    
+
     var esActions = [];
     var indexRecord = {
         index: {
@@ -90,7 +90,7 @@ function addTwitterToUserTimeSeries(twitterProfile) {
         Posts: 0
     };
 
-    getTwitterUserTimeseiesFromEs(userIndex).then(function(data){
+    getTwitterUserTimeseiesFromEs(userIndex).then(function(data) {
         if (data && data.Likes && data.Retweets && data.Posts) {
             newElasticData.Likes = data.Likes;
             newElasticData.Retweets = data.Retweets;
@@ -99,11 +99,11 @@ function addTwitterToUserTimeSeries(twitterProfile) {
 
         addDataToElasticsearch(userIndex, newElasticData).then(function(status) {
             deferred.resolve(status);
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    }, function (error) {
+    }, function(error) {
         sentryClient.captureMessage(error);
         deferred.reject(error);
     });
@@ -148,12 +148,12 @@ function addTwitterPostToTimeseries(username, posts) {
         // Add to elasticsearch
         addDataToElasticsearch(userIndex, newElasticData).then(function(status) {
             deferred.resolve(status);
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
 
-    }, function (error) {
+    }, function(error) {
         console.error(error);
         sentryClient.captureMessage(error);
         deferred.reject(error);

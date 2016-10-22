@@ -134,7 +134,7 @@ function syncIGAndES() {
             };
 
             addToElastic(posts).then(function(status) {
-                instagramTimeseries.addInstagramPostsToTimeSeries(posts).then(function (timeseriesStatus) {
+                instagramTimeseries.addInstagramPostsToTimeSeries(posts).then(function(timeseriesStatus) {
                     rp('https://hchk.io/c2b028ef-a86c-4609-8e62-6af6deeed6c4')
                         .then(function(htmlString) {
                             deferred.resolve(timeseriesStatus);
@@ -144,7 +144,7 @@ function syncIGAndES() {
                             console.error(err);
                             deferred.reject(err);
                         });
-                }, function (error) {
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
                 });
@@ -152,12 +152,12 @@ function syncIGAndES() {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
             deferred.reject(error);
         });
-    }, function (error) {
+    }, function(error) {
         sentryClient.captureMessage(error);
         console.error(error);
         deferred.reject(error);

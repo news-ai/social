@@ -2,7 +2,6 @@
  * Gets new posts for a particular Instagram user
  * With or without an access token
  */
-
 'use strict';
 
 var Q = require('q');
@@ -142,9 +141,9 @@ function addToElastic(username, posts, profile, isFormatted) {
     return deferred.promise;
 }
 
-function PageNotFound(err, response, body){
-  // retry the request if we had an error or if the response was a 'Page Not Found'
-  return err || response.statusCode === 404;
+function PageNotFound(err, response, body) {
+    // retry the request if we had an error or if the response was a 'Page Not Found'
+    return err || response.statusCode === 404;
 }
 
 function getInstagramIdFromUsername(username) {
@@ -272,7 +271,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                     auth: {
                         user: 'jebqsdFMddjuwZpgFrRo',
                         password: ''
-                      }
+                    }
                 }, function(error, response, body) {
                     if (!error && response.statusCode == 200) {
                         console.log('User sent to be private');
@@ -307,7 +306,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                     access_token: '',
                     depth: 1
                 };
-                instagram.addFeedToPubSub(topicName, pubData).then(function (status) {
+                instagram.addFeedToPubSub(topicName, pubData).then(function(status) {
                     if (status) {
                         var error = 'Error occured, but sent another pubsub';
                         sentryClient.captureMessage(error);
@@ -317,7 +316,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                         sentryClient.captureMessage(error);
                         deferred.reject(new Error(error));
                     }
-                }, function (error) {
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(new Error(error));
                 });
@@ -337,7 +336,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                     auth: {
                         user: 'jebqsdFMddjuwZpgFrRo',
                         password: ''
-                      }
+                    }
                 }, function(error, response, body) {
                     if (!error && response.statusCode == 200) {
                         console.log('User sent to be invalid');
@@ -437,9 +436,9 @@ function processInstagramUser(data) {
                         var userProfiles = {
                             data: [formatForTimeseries(profile.data)]
                         };
-                        instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function (tsStatus) {
+                        instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
                             deferred.resolve(tsStatus);
-                        }, function (error) {
+                        }, function(error) {
                             sentryClient.captureMessage(error);
                             deferred.reject(error);
                         });
@@ -471,9 +470,9 @@ function processInstagramUser(data) {
                     var userProfiles = {
                         data: [formatForTimeseries(instagramUserAndPosts[0].data)]
                     };
-                    instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function (tsStatus) {
+                    instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
                         deferred.resolve(tsStatus);
-                    }, function (error) {
+                    }, function(error) {
                         sentryClient.captureMessage(error);
                         deferred.reject(error);
                     });
@@ -507,10 +506,10 @@ instagram.subscribe(topicName, subscriptionName, function(err, message) {
     processInstagramUser(message.data)
         .then(function(status) {
             rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
-                .then(function (htmlString) {
+                .then(function(htmlString) {
                     console.log('Completed execution for ' + message.data.username);
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                     console.error(err);
                 });
         }, function(error) {

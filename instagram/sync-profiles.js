@@ -117,7 +117,7 @@ function syncIGAndES() {
                             console.error(error);
                             deferred.reject(error);
                         });
-                }, function (error) {
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     console.error(error);
                     deferred.reject(error);
@@ -127,12 +127,12 @@ function syncIGAndES() {
                 console.error(error);
                 deferred.reject(error);
             });
-        }, function (error) {
+        }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
             deferred.reject(error);
         });
-    }, function (error) {
+    }, function(error) {
         sentryClient.captureMessage(error);
         console.error(error);
         deferred.reject(error);

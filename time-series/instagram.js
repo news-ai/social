@@ -102,14 +102,14 @@ function addInstagramPostToTimeseries(username, posts) {
             newElasticData.Following = data.Following;
         }
 
-        addInstagramToUserTimeseries(userIndex, newElasticData).then(function (status) {
+        addInstagramToUserTimeseries(userIndex, newElasticData).then(function(status) {
             deferred.resolve(status);
-        }, function (error) {
+        }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    }, function (error) {
+    }, function(error) {
         console.error(error);
         sentryClient.captureMessage(error);
         deferred.reject(error);
@@ -128,14 +128,14 @@ function addInstagramUserToExistingTimeseries(userIndex, newElasticData) {
             newElasticData.Posts = data.Posts;
         }
 
-        addInstagramToUserTimeseries(userIndex, newElasticData).then(function (status) {
+        addInstagramToUserTimeseries(userIndex, newElasticData).then(function(status) {
             deferred.resolve(status);
-        }, function (error) {
+        }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    }, function (error) {
+    }, function(error) {
         console.error(error);
         sentryClient.captureMessage(error);
         deferred.reject(error);

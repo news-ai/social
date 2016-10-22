@@ -265,10 +265,10 @@ subscribe(function(err, message) {
     getContent(message.data)
         .then(function(status) {
             rp('https://hchk.io/8c3456ca-6b17-412c-80fb-d407d5f32b45')
-                .then(function (htmlString) {
+                .then(function(htmlString) {
                     console.log('Completed execution for ' + message.data.url);
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                     console.error(err);
                 });
         }, function(error) {

@@ -190,15 +190,15 @@ stream.on('connected', function(error) {
 stream.on('data', function(tweet) {
     console.log(tweet.id);
     if (!tweet.friends) {
-        processTweet(tweet).then(function (response) {
+        processTweet(tweet).then(function(response) {
             rp('https://hchk.io/73a12c55-c81f-4f0e-b0fe-cc0e26c18cd7')
-                .then(function (htmlString) {
+                .then(function(htmlString) {
                     console.log(response);
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                     console.error(err);
                 });
-        }, function (error) {
+        }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
         });
@@ -211,15 +211,15 @@ stream.on('data', function(tweet) {
 stream.on('garbage', function(tweet) {
     console.log(tweet.id);
     if (!tweet.friends && tweet.id) {
-        processTweet(tweet).then(function (response) {
+        processTweet(tweet).then(function(response) {
             rp('https://hchk.io/73a12c55-c81f-4f0e-b0fe-cc0e26c18cd7')
-                .then(function (htmlString) {
+                .then(function(htmlString) {
                     console.log(response);
                 })
-                .catch(function (err) {
+                .catch(function(err) {
                     console.error(err);
                 });
-        }, function (error) {
+        }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
         });
