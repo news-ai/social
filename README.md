@@ -6,6 +6,23 @@ Getting data from RSS, Instagram, and twitter through Google Cloud Functions, Pu
 
 Feed loops through all the feeds in the API that haven't been processed. It calls the RSS function for each feed. The RSS function gets the RSS headlines and writes them to ES.
 
+### Deployment notes
+
+`pm2 start app.js -i max`
+
+Services to start (in this order):
+
+- `feed/feed.js`
+- `rss/rss.js`
+- `instagram/new-instagram.js`
+- `instagram/stream-instagram.js`
+- `instagram/sync-profiles.js`
+- `instagram/sync-posts.js`
+- `twitter/new-twitter.js`
+- `twitter/stream-twitter.js`
+- `twitter/sync-profiles.js`
+- `twitter/sync-posts.js`
+
 ### RSS
 
 Deployed on Google Compute Engine. Just need to send information to the Pub/Sub topic: `process-rss-feed`.
@@ -75,6 +92,8 @@ Pub/Sub call:
 - `stream-instagram.js`
 
 ### Timeseries
+
+Creating a timeseries of data for both Twitter and Instagram data.
 
 - `twitter.js`
 - `instagram.js`
