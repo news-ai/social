@@ -175,7 +175,7 @@ function addToElastic(publicationId, content) {
             });
         }
 
-       var i, j, temp, chunk = 50;
+       var i, j, temp, chunk = 25;
        for (i = 0, j = esActions.length; i < j; i += chunk) {
            temp = esActions.slice(i, i + chunk);
 
