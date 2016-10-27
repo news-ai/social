@@ -71,6 +71,48 @@ function addInstagramToUserTimeseries(userIndex, newElasticData) {
     return deferred.promise;
 }
 
+function addInstagramPostToUserTimeseriesUsingScript(userIndex, newElasticData) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.update({
+        index: 'timeseries',
+        type: 'instagram',
+        id: userIndex.toLowerCase(),
+        body: {
+            script: 'ctx._source.data.Following=' + newElasticData.Following + '; ctx._source.data.Followers=' + newElasticData.Followers
+        }
+    }, function(error, response) {
+        if (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        }
+        deferred.resolve(response);
+    });
+
+    return deferred.promise;
+}
+
+function addInstagramProfileToUserTimeseriesUsingScript(userIndex, newElasticData) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.update({
+        index: 'timeseries',
+        type: 'instagram',
+        id: userIndex.toLowerCase(),
+        body: {
+            script: 'ctx._source.data.Likes=' + newElasticData.Likes + '; ctx._source.data.Comments=' + newElasticData.Comments + '; ctx._source.data.Posts=' + newElasticData.Posts
+        }
+    }, function(error, response) {
+        if (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        }
+        deferred.resolve(response);
+    });
+
+    return deferred.promise;
+}
+
 function addInstagramPostToTimeseries(username, posts) {
     var deferred = Q.defer();
 
