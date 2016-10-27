@@ -109,8 +109,25 @@ function formatToFeed(headline, publicationId) {
     };
 }
 
-function addToElastic(publicationId, content) {
+function bulkAddEleastic(esActions) {
     var deferred = Q.defer();
+
+    client.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.resolve(false);
+        }
+        deferred.resolve(true);
+    });
+
+    return deferred.promise;
+}
+
+function addToElastic(publicationId, content) {
+    var allPromises = [];
 
     if (Object.prototype.toString.call(publicationId) === '[object String]') {
         publicationId = parseInt(publicationId, 10);
@@ -158,19 +175,17 @@ function addToElastic(publicationId, content) {
             });
         }
 
-        client.bulk({
-            body: esActions
-        }, function(error, response) {
-            if (error) {
-                console.error(error);
-                sentryClient.captureMessage(error);
-                deferred.resolve(false);
-            }
-            deferred.resolve(true);
-        });
+       var i, j, temp, chunk = 10;
+       for (i = 0, j = esActions.length; i < j; i += chunk) {
+           temp = esActions.slice(i, i + chunk);
+
+           var toExecute = bulkAddEleastic(temp);
+           allPromises.push(toExecute);
+       }
+        
     }
 
-    return deferred.promise;
+    return Q.allSettled(allPromises);
 }
 
 function getContent(data) {
