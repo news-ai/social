@@ -425,10 +425,10 @@ function formatPostsForTimeseries(username, posts) {
 
     for (var i = 0; i < posts.length; i++) {
         var instagramPost = {
-            'CreatedAt': moment.unix(parseInt(posts[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss'),
+            'CreatedAt': posts[i].CreatedAt,
             'Username': username,
-            'Likes': posts[i].likes && posts[i].likes.count || 0,
-            'Comments': posts[i].comments && posts[i].comments.count || 0
+            'Likes': posts[i].Likes || 0,
+            'Comments': posts[i].Comments || 0
         };
         timeseriesPosts.push(instagramPost);
     }
@@ -500,8 +500,10 @@ function processInstagramUser(data) {
 
                     // Process the posts to be added to Timeseries
                     var userPosts = {
-                        data: formatPostsForTimeseries(username, instagramUserAndPosts[1].data)
+                        data: formatPostsForTimeseries(data.username, instagramUserAndPosts[1].data)
                     };
+
+                    console.log(userPosts);
 
                     instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
                         instagramTimeseries.addInstagramPostsToTimeSeries(userPosts).then(function(tsPostsStatus) {
