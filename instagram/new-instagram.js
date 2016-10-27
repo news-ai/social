@@ -420,6 +420,22 @@ function formatForTimeseries(instagramUser) {
     }
 }
 
+function formatPostsForTimeseries(username, posts) {
+    var timeseriesPosts = [];
+
+    for (var i = 0; i < posts.length; i++) {
+        var instagramPost = {
+            'CreatedAt': moment.unix(parseInt(posts[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss'),
+            'Username': username,
+            'Likes': posts[i].likes && posts[i].likes.count || 0,
+            'Comments': posts[i].comments && posts[i].comments.count || 0
+        };
+        timeseriesPosts.push(instagramPost);
+    }
+
+    return timeseriesPosts;
+}
+
 // Process a particular Instagram user
 function processInstagramUser(data) {
     var deferred = Q.defer();
@@ -436,8 +452,19 @@ function processInstagramUser(data) {
                         var userProfiles = {
                             data: [formatForTimeseries(profile.data)]
                         };
+
+                        // Process the posts to be added to Timeseries
+                        var userPosts = {
+                            data: formatPostsForTimeseries(username, instagramIdAndPosts[1].data)
+                        };
+
                         instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
-                            deferred.resolve(tsStatus);
+                            instagramTimeseries.addInstagramPostsToTimeSeries(userPosts).then(function(tsPostsStatus) {
+                                deferred.resolve(tsPostsStatus);
+                            }, function(error) {
+                                sentryClient.captureMessage(error);
+                                deferred.reject(error);
+                            });
                         }, function(error) {
                             sentryClient.captureMessage(error);
                             deferred.reject(error);
@@ -470,8 +497,19 @@ function processInstagramUser(data) {
                     var userProfiles = {
                         data: [formatForTimeseries(instagramUserAndPosts[0].data)]
                     };
+
+                    // Process the posts to be added to Timeseries
+                    var userPosts = {
+                        data: formatPostsForTimeseries(username, instagramUserAndPosts[1].data)
+                    };
+
                     instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
-                        deferred.resolve(tsStatus);
+                        instagramTimeseries.addInstagramPostsToTimeSeries(userPosts).then(function(tsPostsStatus) {
+                            deferred.resolve(tsPostsStatus);
+                        }, function(error) {
+                            sentryClient.captureMessage(error);
+                            deferred.reject(error);
+                        });
                     }, function(error) {
                         sentryClient.captureMessage(error);
                         deferred.reject(error);

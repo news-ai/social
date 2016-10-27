@@ -176,31 +176,29 @@ function addToElastic(publicationId, content) {
 function getContent(data) {
     var deferred = Q.defer();
 
-    getFeedFromUrl(data.url)
-        .then(function(content) {
-            addToElastic(data.publicationId, content)
-                .then(function(status) {
-                    if (status) {
-                        deferred.resolve(true);
-                    } else {
-                        var error = 'Elasticsearch add failed';
-                        console.error(error);
-                        sentryClient.captureMessage(error);
-                        deferred.resolve(false);
-                        throw new Error(error);
-                    }
-                }, function(error) {
-                    console.error(error);
-                    sentryClient.captureMessage(error);
-                    deferred.resolve(false);
-                    throw new Error(error);
-                });
+    getFeedFromUrl(data.url).then(function(content) {
+        addToElastic(data.publicationId, content).then(function(status) {
+            if (status) {
+                deferred.resolve(true);
+            } else {
+                var error = 'Elasticsearch add failed';
+                console.error(error);
+                sentryClient.captureMessage(error);
+                deferred.resolve(false);
+                throw new Error(error);
+            }
         }, function(error) {
             console.error(error);
             sentryClient.captureMessage(error);
-            deferred.reject(new Error(error));
+            deferred.resolve(false);
             throw new Error(error);
         });
+    }, function(error) {
+        console.error(error);
+        sentryClient.captureMessage(error);
+        deferred.reject(new Error(error));
+        throw new Error(error);
+    });
 
     return deferred.promise;
 }
