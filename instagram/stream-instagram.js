@@ -63,6 +63,10 @@ function syncIGAndES() {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
+    }, function (error) {
+        console.error(error);
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
     });
 
     return deferred.promise;

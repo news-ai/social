@@ -137,8 +137,10 @@ function syncTwitterAndES() {
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
             });
+        }, function (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
         });
-
     }, function(error) {
         sentryClient.captureMessage(error);
         console.error(error);
