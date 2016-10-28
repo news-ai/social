@@ -134,9 +134,7 @@ function addToElastic(publicationId, content) {
     }
 
     // If content length is zero then resolve right away
-    if (content.length === 0) {
-        deferred.resolve(true);
-    } else {
+    if (content.length > 0) {
         var esActions = [];
         for (var i = content.length - 1; i >= 0; i--) {
             // If the feed doesn't have a URL field
