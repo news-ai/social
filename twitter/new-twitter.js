@@ -181,7 +181,12 @@ function addToElastic(username, tweets) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         } else {
-            deferred.resolve(user);
+            twitterTimeseries.addTwitterPostsToTimeSeries(tweets).then(function(status) {
+                deferred.resolve(user);
+            }, function (error) {
+                sentryClient.captureMessage(error);
+                deferred.reject(error);
+            });
         }
     });
 

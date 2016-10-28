@@ -2,7 +2,7 @@
 
 [Dashboard](https://app.keymetrics.io/#/bucket/57fe822672900b983297f577/dashboard)
 
-Getting data from RSS, Instagram, and twitter through Google Cloud Functions, Pub/Sub, and Google Compute Engine.
+Getting data from RSS, Instagram, and Twitter through Pub/Sub, and Google Compute Engine.
 
 Feed loops through all the feeds in the API that haven't been processed. It calls the RSS function for each feed. The RSS function gets the RSS headlines and writes them to ES.
 
@@ -78,11 +78,10 @@ Pub/Sub call:
 
 Pub/Sub call:
 
-- `new-instagram.js` takes Pub/Sub of `username`, and `access_token`. Sometimes it passes in `depth`.
+- `new-instagram.js` takes Pub/Sub of `username`. Sometimes it passes in `depth`.
 
 ```json
 {
-    "access_token": "",
     "username": "abhiagarwal"
 }
 ```
