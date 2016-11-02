@@ -237,7 +237,6 @@ function processTwitterUser(data) {
                         'username': data.username,
                         'fullname': user.name || ''
                     };
-                    console.log(apiData);
                     request({
                         url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
                         method: 'POST',
