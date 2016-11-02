@@ -231,7 +231,28 @@ function processTwitterUser(data) {
                 // Follow the user on the NewsAIHQ Twitter so we can stream the
                 // Tweets later.
                 followOnTwitter(user).then(function(response) {
-                    deferred.resolve(true);
+                    var apiData = {
+                        'network': 'Twitter',
+                        'username': data.username,
+                        'fullname': user.name || ''
+                    };
+                    request({
+                        url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
+                        method: 'POST',
+                        json: apiData,
+                        auth: {
+                            user: 'jebqsdFMddjuwZpgFrRo',
+                            password: ''
+                        }
+                    }, function(error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            console.log('User sent to be invalid');
+                            deferred.resolve(true);
+                        } else {
+                            sentryClient.captureMessage(body);
+                            deferred.reject(new Error(body));
+                        }
+                    });
                 }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
