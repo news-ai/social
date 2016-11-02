@@ -1,6 +1,7 @@
 'use strict';
 
 var elasticsearch = require('elasticsearch');
+var request = require('request');
 var rp = require('request-promise');
 var moment = require('moment');
 var Q = require('q');
@@ -236,6 +237,7 @@ function processTwitterUser(data) {
                         'username': data.username,
                         'fullname': user.name || ''
                     };
+                    console.log(apiData);
                     request({
                         url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
                         method: 'POST',
@@ -246,9 +248,10 @@ function processTwitterUser(data) {
                         }
                     }, function(error, response, body) {
                         if (!error && response.statusCode == 200) {
-                            console.log('User sent to be invalid');
+                            console.log('User sent to be changed in details');
                             deferred.resolve(true);
                         } else {
+                            console.error(body);
                             sentryClient.captureMessage(body);
                             deferred.reject(new Error(body));
                         }
