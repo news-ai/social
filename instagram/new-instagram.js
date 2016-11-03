@@ -523,9 +523,13 @@ function processInstagramUser(data) {
                                     console.log('User sent to be changed in details');
                                     deferred.resolve(tsPostsStatus);
                                 } else {
-                                    console.error(body);
-                                    sentryClient.captureMessage(body);
-                                    deferred.reject(new Error(body));
+                                    if (response.statusCode !== 500) {
+                                        console.error(body);
+                                        sentryClient.captureMessage(body);
+                                        deferred.reject(new Error(body));
+                                    } else {
+                                        deferred.resolve(tsPostsStatus);
+                                    }
                                 }
                             });
                         }, function(error) {
