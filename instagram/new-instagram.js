@@ -511,28 +511,29 @@ function processInstagramUser(data) {
                                 'username': data.username,
                                 'fullname': instagramUserAndPosts[0] && instagramUserAndPosts[0].data && instagramUserAndPosts[0].data.full_name || ''
                             };
-                            request({
-                                url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
-                                method: 'POST',
-                                json: apiData,
-                                auth: {
-                                    user: 'jebqsdFMddjuwZpgFrRo',
-                                    password: ''
-                                }
-                            }, function(error, response, body) {
-                                if (!error && response.statusCode == 200) {
-                                    console.log('User sent to be changed in details');
-                                    deferred.resolve(tsPostsStatus);
-                                } else {
-                                    if (response.statusCode !== 500) {
-                                        console.error(body);
-                                        sentryClient.captureMessage(body);
-                                        deferred.reject(new Error(body));
-                                    } else {
-                                        deferred.resolve(tsPostsStatus);
-                                    }
-                                }
-                            });
+                            // request({
+                            //     url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
+                            //     method: 'POST',
+                            //     json: apiData,
+                            //     auth: {
+                            //         user: 'jebqsdFMddjuwZpgFrRo',
+                            //         password: ''
+                            //     }
+                            // }, function(error, response, body) {
+                            //     if (!error && response.statusCode == 200) {
+                            //         console.log('User sent to be changed in details');
+                            //         deferred.resolve(tsPostsStatus);
+                            //     } else {
+                            //         if (response.statusCode !== 500) {
+                            //             console.error(body);
+                            //             sentryClient.captureMessage(body);
+                            //             deferred.reject(new Error(body));
+                            //         } else {
+                            //             deferred.resolve(tsPostsStatus);
+                            //         }
+                            //     }
+                            // });
+                            deferred.resolve(tsPostsStatus);
                         }, function(error) {
                             sentryClient.captureMessage(error);
                             deferred.reject(error);
