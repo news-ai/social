@@ -237,24 +237,25 @@ function processTwitterUser(data) {
                         'username': data.username,
                         'fullname': user.name || ''
                     };
-                    request({
-                        url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
-                        method: 'POST',
-                        json: apiData,
-                        auth: {
-                            user: 'jebqsdFMddjuwZpgFrRo',
-                            password: ''
-                        }
-                    }, function(error, response, body) {
-                        if (!error && response.statusCode == 200) {
-                            console.log('User sent to be changed in details');
-                            deferred.resolve(true);
-                        } else {
-                            console.error(body);
-                            sentryClient.captureMessage(body);
-                            deferred.reject(new Error(body));
-                        }
-                    });
+                    // request({
+                    //     url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
+                    //     method: 'POST',
+                    //     json: apiData,
+                    //     auth: {
+                    //         user: 'jebqsdFMddjuwZpgFrRo',
+                    //         password: ''
+                    //     }
+                    // }, function(error, response, body) {
+                    //     if (!error && response.statusCode == 200) {
+                    //         console.log('User sent to be changed in details');
+                    //         deferred.resolve(true);
+                    //     } else {
+                    //         console.error(body);
+                    //         sentryClient.captureMessage(body);
+                    //         deferred.reject(new Error(body));
+                    //     }
+                    // });
+                    deferred.resolve(true);
                 }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
