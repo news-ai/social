@@ -271,7 +271,8 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                     auth: {
                         user: 'jebqsdFMddjuwZpgFrRo',
                         password: ''
-                    }
+                    },
+                    maxAttempts: 1
                 }, function(error, response, body) {
                     if (!error && response.statusCode == 200) {
                         console.log('User sent to be private');
