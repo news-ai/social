@@ -301,56 +301,34 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                 }
             }
         } else {
-            if (!('depth' in data)) {
-                var pubData = {
-                    username: data.username,
-                    access_token: '',
-                    depth: 1
-                };
-                instagram.addFeedToPubSub(topicName, pubData).then(function(status) {
-                    if (status) {
-                        var error = 'Error occured, but sent another pubsub';
-                        sentryClient.captureMessage(error);
-                        deferred.reject(new Error(error));
-                    } else {
-                        var error = 'Error occured, but could not send another pubsub';
-                        sentryClient.captureMessage(error);
-                        deferred.reject(new Error(error));
-                    }
-                }, function(error) {
-                    sentryClient.captureMessage(error);
-                    deferred.reject(new Error(error));
-                });
-            } else {
-                // Invalidate the Instagram User here before sending the error
-                var apiData = {
-                    'network': 'Instagram',
-                    'username': data.username,
-                    'privateorinvalid': 'Invalid'
-                };
+            // Invalidate the Instagram User here before sending the error
+            var apiData = {
+                'network': 'Instagram',
+                'username': data.username,
+                'privateorinvalid': 'Invalid'
+            };
 
-                // Set the user to be invalid
-                request({
-                    url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
-                    method: 'POST',
-                    json: apiData,
-                    auth: {
-                        user: 'jebqsdFMddjuwZpgFrRo',
-                        password: ''
-                    }
-                }, function(error, response, body) {
-                    if (!error && response.statusCode == 200) {
-                        console.log('User sent to be invalid');
-                        deferred.resolve([instagramUser, []]);
-                    } else {
-                        console.error(error);
-                        console.error(response.statusCode);
-                        console.error(body);
-                        sentryClient.captureMessage(body);
-                        deferred.reject(new Error(body));
-                    }
-                });
-            }
+            // Set the user to be invalid
+            request({
+                url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
+                method: 'POST',
+                json: apiData,
+                auth: {
+                    user: 'jebqsdFMddjuwZpgFrRo',
+                    password: ''
+                }
+            }, function(error, response, body) {
+                if (!error && response.statusCode == 200) {
+                    console.log('User sent to be invalid');
+                    deferred.resolve([instagramUser, []]);
+                } else {
+                    console.error(error);
+                    console.error(response.statusCode);
+                    console.error(body);
+                    sentryClient.captureMessage(body);
+                    deferred.reject(new Error(body));
+                }
+            });
         }
     });
 
@@ -598,5 +576,3 @@ instagram.subscribe(topicName, subscriptionName, function(err, message) {
 //     }, function(error) {
 //         console.error(error);
 //     });
-
-newInstagram.processInstagramUser = processInstagramUser;
