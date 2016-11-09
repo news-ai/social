@@ -38,7 +38,7 @@ function getTwitterUserPageFromEs(offset) {
         var hits = resp.hits.hits;
         deferred.resolve(hits);
     }, function(err) {
-        console.trace(err.message);
+        console.error(err.message);
         deferred.reject(err);
     });
 
@@ -98,7 +98,7 @@ function getTweetPageFromEsLastWeek(offset) {
         var hits = resp.hits.hits;
         deferred.resolve(hits);
     }, function(err) {
-        console.trace(err.message);
+        console.error(err.message);
         deferred.reject(err);
     });
 
