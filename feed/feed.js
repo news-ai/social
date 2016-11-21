@@ -3,9 +3,17 @@
 var moment = require('moment');
 var rp = require('request-promise');
 var Q = require('q');
+var elasticsearch = require('elasticsearch');
 var raven = require('raven');
 var gcloud = require('google-cloud')({
     projectId: 'newsai-1166'
+});
+
+// Instantiate a elasticsearch client
+var client = new elasticsearch.Client({
+    host: 'https://newsai:XkJRNRx2EGCd6@search1.newsai.org',
+    // log: 'trace',
+    rejectUnauthorized: false
 });
 
 // Instantiate a datastore client
