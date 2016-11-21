@@ -59,6 +59,38 @@ function addFeedToPubSub(publicationId, url) {
     return deferred.promise;
 }
 
+function addFeedToElaticsearch(item) {
+    var deferred = Q.defer();
+
+    var esActions = [];
+    var indexRecord = {
+        index: {
+            _index: 'rssfeeds',
+            _type: 'feed',
+            _id: item.key.id
+        }
+    };
+    var dataRecord = item.data;
+
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
+    });
+
+    client.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.resolve(false);
+        }
+        deferred.resolve(true);
+    });
+
+    return deferred.promise;
+}
+
 function getLatestFeeds() {
     var time = moment();
     var fifteenMinutes = moment.duration(15, 'minutes');
@@ -72,8 +104,8 @@ function getLatestFeeds() {
         entities.forEach(function(item) {
             if (!(item.data.FeedURL in feedMap)) {
                 feedMap[item.data.FeedURL] = true;
-                addFeedToPubSub(item.data.PublicationId, item.data.FeedURL)
-                    .then(function(status) {
+                addFeedToPubSub(item.data.PublicationId, item.data.FeedURL).then(function(status) {
+                    addFeedToElaticsearch(item).then(function (esStatus) {
                         // Change the `Updated` time to now
                         item.data.Updated = moment()._d;
                         datastore.save({
@@ -89,6 +121,10 @@ function getLatestFeeds() {
                         console.error(error);
                         sentryClient.captureMessage(error);
                     });
+                }, function(error) {
+                    console.error(error);
+                    sentryClient.captureMessage(error);
+                });
             }
         });
     });
