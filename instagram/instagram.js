@@ -268,7 +268,6 @@ function addFeedToPubSub(topicName, pubData) {
         if (err) {
             deferred.reject(new Error(err));
             console.error('Error occurred while getting pubsub topic', err);
-            sentryClient.captureMessage(err);
         } else {
             topic.publish({
                 data: pubData
@@ -276,7 +275,6 @@ function addFeedToPubSub(topicName, pubData) {
                 if (err) {
                     deferred.reject(new Error(err));
                     console.error('Error occurred while queuing background task', err);
-                    sentryClient.captureMessage(err);
                 } else {
                     deferred.resolve(true);
                     console.info('Instagram user ' + pubData.username + ' sent to ' + topicName + ' pubsub');
