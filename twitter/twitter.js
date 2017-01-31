@@ -105,6 +105,51 @@ function getTweetPageFromEsLastWeek(offset) {
     return deferred.promise;
 }
 
+function getTweetPageFromEsLastDay(offset) {
+    var deferred = Q.defer();
+
+    var dateTo = moment().format('YYYY-MM-DD');
+    var dateFrom = moment().subtract(1, 'd')
+    var lastWeek = dateFrom.format('YYYY-MM-DDTHH:mm:ss');
+
+    elasticSearchClient.search({
+        index: 'tweets',
+        type: 'tweet',
+        body: {
+            "query": {
+                "filtered": {
+                    "query": {
+                        "match_all": {}
+                    },
+                    "filter": {
+                        "range": {
+                            "data.CreatedAt": {
+                                "gte": lastWeek
+                            }
+                        }
+                    }
+                }
+            },
+            "sort": [{
+                "data.CreatedAt": {
+                    "order": "desc",
+                    "mode": "avg"
+                }
+            }],
+            "size": 100,
+            "from": 100 * offset,
+        }
+    }).then(function(resp) {
+        var hits = resp.hits.hits;
+        deferred.resolve(hits);
+    }, function(err) {
+        console.error(err.message);
+        deferred.reject(err);
+    });
+
+    return deferred.promise;
+}
+
 function getTweetsFromEsLastWeek(offset, allData) {
     var deferred = Q.defer();
 
@@ -120,5 +165,21 @@ function getTweetsFromEsLastWeek(offset, allData) {
     return deferred.promise;
 }
 
+function getTweetsFromEsLastDay(offset, allData) {
+    var deferred = Q.defer();
+
+    getTweetPageFromEsLastDay(offset).then(function(data) {
+        if (data.length === 0) {
+            deferred.resolve(allData);
+        } else {
+            var newData = allData.concat(data);
+            deferred.resolve(getTweetsFromEsLastDay(offset + 1, newData));
+        }
+    });
+
+    return deferred.promise;
+}
+
+twitter.getTweetsFromEsLastDay = getTweetsFromEsLastDay;
 twitter.getTweetsFromEsLastWeek = getTweetsFromEsLastWeek;
 twitter.getTwitterProfilesFromEs = getTwitterProfilesFromEs;

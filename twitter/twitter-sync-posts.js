@@ -185,7 +185,7 @@ function syncTwitterAndES() {
     var deferred = Q.defer();
 
     // Get tweets from ES
-    twitter.getTweetsFromEsLastWeek(0, []).then(function(data) {
+    twitter.getTweetsFromEsLastDay(0, []).then(function(data) {
         console.log(data.length);
         var tweetIds = [];
         var tweetIdsToESIdAndUsername = {};
