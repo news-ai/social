@@ -257,33 +257,34 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
 
             // If the set user is private
             if (instagramUser && instagramUser.is_private) {
-                var apiData = {
-                    'network': 'Instagram',
-                    'username': data.username,
-                    'privateorinvalid': 'Private'
-                };
+                deferred.resolve([instagramUser, []]);
+                // var apiData = {
+                //     'network': 'Instagram',
+                //     'username': data.username,
+                //     'privateorinvalid': 'Private'
+                // };
 
-                // Set the user to be private
-                request({
-                    url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
-                    method: 'POST',
-                    json: apiData,
-                    auth: {
-                        user: 'jebqsdFMddjuwZpgFrRo',
-                        password: ''
-                    },
-                    maxAttempts: 1
-                }, function(error, response, body) {
-                    if (!error && response.statusCode == 200) {
-                        console.log('User sent to be private');
-                        deferred.resolve([instagramUser, []]);
-                    } else {
-                        console.error(error);
-                        console.error(body);
-                        sentryClient.captureMessage(body);
-                        deferred.reject(new Error(body));
-                    }
-                });
+                // // Set the user to be private
+                // request({
+                //     url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
+                //     method: 'POST',
+                //     json: apiData,
+                //     auth: {
+                //         user: 'jebqsdFMddjuwZpgFrRo',
+                //         password: ''
+                //     },
+                //     maxAttempts: 1
+                // }, function(error, response, body) {
+                //     if (!error && response.statusCode == 200) {
+                //         console.log('User sent to be private');
+                //         deferred.resolve([instagramUser, []]);
+                //     } else {
+                //         console.error(error);
+                //         console.error(body);
+                //         sentryClient.captureMessage(body);
+                //         deferred.reject(new Error(body));
+                //     }
+                // });
             } else {
                 // If it not private
                 if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {
