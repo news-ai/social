@@ -303,33 +303,35 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
             }
         } else {
             // Invalidate the Instagram User here before sending the error
-            var apiData = {
-                'network': 'Instagram',
-                'username': data.username,
-                'privateorinvalid': 'Invalid'
-            };
+            // var apiData = {
+            //     'network': 'Instagram',
+            //     'username': data.username,
+            //     'privateorinvalid': 'Invalid'
+            // };
 
-            // Set the user to be invalid
-            request({
-                url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
-                method: 'POST',
-                json: apiData,
-                auth: {
-                    user: 'jebqsdFMddjuwZpgFrRo',
-                    password: ''
-                }
-            }, function(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    console.log('User sent to be invalid');
-                    deferred.resolve([instagramUser, []]);
-                } else {
-                    console.error(error);
-                    console.error(response.statusCode);
-                    console.error(body);
-                    sentryClient.captureMessage(body);
-                    deferred.reject(new Error(body));
-                }
-            });
+            deferred.resolve([instagramUser, []]);
+
+            // // Set the user to be invalid
+            // request({
+            //     url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
+            //     method: 'POST',
+            //     json: apiData,
+            //     auth: {
+            //         user: 'jebqsdFMddjuwZpgFrRo',
+            //         password: ''
+            //     }
+            // }, function(error, response, body) {
+            //     if (!error && response.statusCode == 200) {
+            //         console.log('User sent to be invalid');
+            //         deferred.resolve([instagramUser, []]);
+            //     } else {
+            //         console.error(error);
+            //         console.error(response.statusCode);
+            //         console.error(body);
+            //         sentryClient.captureMessage(body);
+            //         deferred.reject(new Error(body));
+            //     }
+            // });
         }
     });
 
