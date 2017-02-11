@@ -89,7 +89,7 @@ function addToElastic(posts) {
     }
 
     if (esActions.length > 0) {
-         // Has to be an even number
+        // Has to be an even number
         var i, j, temp, chunk = 24;
         for (i = 0, j = esActions.length; i < j; i += chunk) {
             temp = esActions.slice(i, i + chunk);

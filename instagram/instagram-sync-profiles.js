@@ -24,6 +24,23 @@ var elasticSearchClient = new elasticsearch.Client({
 var sentryClient = new raven.Client('https://a026de7b0e4b40448b769ad8d17c8a90:d7fd5ae279134c51bc10e37c5485b93f@sentry.io/106015');
 sentryClient.patchGlobal();
 
+function bulkAddEleastic(esActions) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.resolve(false);
+        }
+        deferred.resolve(true);
+    });
+
+    return deferred.promise;
+}
+
 // Add these instagram posts to ElasticSearch
 // username here is the base parent username.
 // Not just a username of any user.
@@ -64,23 +81,24 @@ function addToElastic(profiles) {
         });
     }
 
+    var allPromises = [];
+
     if (esActions.length > 0) {
-        elasticSearchClient.bulk({
-            body: esActions
-        }, function(error, response) {
-            if (error) {
-                sentryClient.captureMessage(error);
-                deferred.reject(error);
-            }
-            deferred.resolve(true);
-        });
+        // Has to be an even number
+        var i, j, temp, chunk = 24;
+        for (i = 0, j = esActions.length; i < j; i += chunk) {
+            temp = esActions.slice(i, i + chunk);
+
+            var toExecute = bulkAddEleastic(temp);
+            allPromises.push(toExecute);
+        }
     } else {
         var error = 'Nothing was added to ES for username ' + username;
         sentryClient.captureMessage(error);
         deferred.reject(error);
     }
 
-    return deferred.promise;
+    return Q.allSettled(allPromises);
 }
 
 function syncIGAndES() {
