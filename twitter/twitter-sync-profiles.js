@@ -32,6 +32,23 @@ var twitterClient = new Twitter({
 var sentryClient = new raven.Client('https://5099d6dcd0334f69ba7431249da1dfd2:957fc47e9f19472db28dcb9e7008742b@sentry.io/106942');
 sentryClient.patchGlobal();
 
+function addESActionsToEs(esActions) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            console.log(error);
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        }
+        deferred.resolve(response);
+    });
+
+    return deferred.promise;
+}
+
 function addToElastic(userProfiles) {
     var deferred = Q.defer();
 
@@ -55,17 +72,16 @@ function addToElastic(userProfiles) {
         });
     }
 
-    elasticSearchClient.bulk({
-        body: esActions
-    }, function(error, response) {
-        if (error) {
-            sentryClient.captureMessage(error);
-            deferred.reject(error);
-        }
-        deferred.resolve(response);
-    });
+    var allPromises = [];
 
-    return deferred.promise;
+    var i, j, temp, chunk = 100;
+    for (i = 0, j = esActions.length; i < j; i += chunk) {
+        temp = esActions.slice(i, i + chunk);
+        var tempFunction = addESActionsToEs(temp);
+        allPromises.push(tempFunction);
+    }
+
+    return Q.all(allPromises);
 }
 
 // Profiles from Twitter
