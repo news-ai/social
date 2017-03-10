@@ -221,20 +221,20 @@ function followOnTwitter(user) {
 }
 
 // Process a particular Twitter user
-function processTwitterUser(data) {
+function processTwitterUser(username) {
     var deferred = Q.defer();
 
     // Get tweets for a user
-    getTweetsFromUsername(data.username).then(function(tweets) {
+    getTweetsFromUsername(username).then(function(tweets) {
         // Add tweets to elasticsearch
-        addToElastic(data.username, tweets).then(function(user) {
+        addToElastic(username, tweets).then(function(user) {
             if (user) {
                 // Follow the user on the NewsAIHQ Twitter so we can stream the
                 // Tweets later.
                 followOnTwitter(user).then(function(response) {
                     var apiData = {
                         'network': 'Twitter',
-                        'username': data.username,
+                        'username': username,
                         'fullname': user.name || ''
                     };
                     // request({
@@ -276,6 +276,18 @@ function processTwitterUser(data) {
     });
 
     return deferred.promise;
+}
+
+function processTwitterUsers(data) {
+    var allPromises = [];
+
+    var twitterUsernames = data.username.split(',');
+    for (var i = 0; i < twitterUsernames.length; i++) {
+        var toExecute = processTwitterUser(twitterUsernames[i]);
+        allPromises.push(toExecute);
+    }
+
+    return Q.all(allPromises);
 }
 
 // Subscribe to Pub/Sub for this particular topic
@@ -336,7 +348,7 @@ subscribe(function(err, message) {
         throw err;
     }
     console.log('Received request to process twitter feed ' + message.data.username);
-    processTwitterUser(message.data)
+    processTwitterUsers(message.data)
         .then(function(status) {
             rp('https://hchk.io/1a7203c6-1716-4933-bdc0-673c4cd2d7bd')
                 .then(function(htmlString) {
