@@ -242,11 +242,11 @@ function getInstagramFromNodes(media) {
     return Q.all(allPromises);
 }
 
-function getInstagramFromUsernameWithoutAccessToken(data) {
+function getInstagramFromUsernameWithoutAccessToken(username) {
     var deferred = Q.defer();
 
     request({
-        url: 'https://www.instagram.com/' + data.username + '/?__a=1',
+        url: 'https://www.instagram.com/' + username + '/?__a=1',
         maxAttempts: 3,
         retryDelay: 3000,
         retryStrategy: PageNotFound
@@ -258,33 +258,6 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
             // If the set user is private
             if (instagramUser && instagramUser.is_private) {
                 deferred.resolve([instagramUser, []]);
-                // var apiData = {
-                //     'network': 'Instagram',
-                //     'username': data.username,
-                //     'privateorinvalid': 'Private'
-                // };
-
-                // // Set the user to be private
-                // request({
-                //     url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
-                //     method: 'POST',
-                //     json: apiData,
-                //     auth: {
-                //         user: 'jebqsdFMddjuwZpgFrRo',
-                //         password: ''
-                //     },
-                //     maxAttempts: 1
-                // }, function(error, response, body) {
-                //     if (!error && response.statusCode == 200) {
-                //         console.log('User sent to be private');
-                //         deferred.resolve([instagramUser, []]);
-                //     } else {
-                //         console.error(error);
-                //         console.error(body);
-                //         sentryClient.captureMessage(body);
-                //         deferred.reject(new Error(body));
-                //     }
-                // });
             } else {
                 // If it not private
                 if (instagramUser && instagramUser.media && instagramUser.media.count > 0) {
@@ -302,36 +275,7 @@ function getInstagramFromUsernameWithoutAccessToken(data) {
                 }
             }
         } else {
-            // Invalidate the Instagram User here before sending the error
-            // var apiData = {
-            //     'network': 'Instagram',
-            //     'username': data.username,
-            //     'privateorinvalid': 'Invalid'
-            // };
-
             deferred.resolve([instagramUser, []]);
-
-            // // Set the user to be invalid
-            // request({
-            //     url: 'https://tabulae.newsai.org/tasks/socialUsernameInvalid',
-            //     method: 'POST',
-            //     json: apiData,
-            //     auth: {
-            //         user: 'jebqsdFMddjuwZpgFrRo',
-            //         password: ''
-            //     }
-            // }, function(error, response, body) {
-            //     if (!error && response.statusCode == 200) {
-            //         console.log('User sent to be invalid');
-            //         deferred.resolve([instagramUser, []]);
-            //     } else {
-            //         console.error(error);
-            //         console.error(response.statusCode);
-            //         console.error(body);
-            //         sentryClient.captureMessage(body);
-            //         deferred.reject(new Error(body));
-            //     }
-            // });
         }
     });
 
@@ -419,126 +363,68 @@ function formatPostsForTimeseries(username, posts) {
 }
 
 // Process a particular Instagram user
-function processInstagramUser(data) {
+function processInstagramUser(username) {
     var deferred = Q.defer();
 
-    if (data.access_token !== '') {
-        // Get instagram post for a user
-        getInstagramFromUsernameWithAccessToken(data).then(function(instagramIdAndPosts) {
-            // Get instagram profile for a user
-            getInstagramProfileFromUsernameWithAccessToken(data, instagramIdAndPosts[0]).then(function(profile) {
-                // Add instagram posts to elasticsearch
-                addToElastic(data.username, instagramIdAndPosts[1], profile, false).then(function(status) {
-                    if (status) {
-                        // Process the user to be added to Timeseries
-                        var userProfiles = {
-                            data: [formatForTimeseries(profile.data)]
+    // If there is no access_token passed into the process
+    getInstagramFromUsernameWithoutAccessToken(username).then(function(instagramUserAndPosts) {
+        instagramUserAndPosts = formatInstagramUserAndPosts(instagramUserAndPosts);
+        // Add instagram posts to elasticsearch
+        addToElastic(username, instagramUserAndPosts[1], instagramUserAndPosts[0], true).then(function(status) {
+            if (status) {
+                // Process the user to be added to Timeseries
+                var userProfiles = {
+                    data: [formatForTimeseries(instagramUserAndPosts[0].data)]
+                };
+
+                // Process the posts to be added to Timeseries
+                var userPosts = {
+                    data: formatPostsForTimeseries(username, instagramUserAndPosts[1].data)
+                };
+
+                instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
+                    instagramTimeseries.addInstagramPostsToTimeSeries(userPosts).then(function(tsPostsStatus) {
+                        var apiData = {
+                            'network': 'Instagram',
+                            'username': username,
+                            'fullname': instagramUserAndPosts[0] && instagramUserAndPosts[0].data && instagramUserAndPosts[0].data.full_name || ''
                         };
-
-                        // Process the posts to be added to Timeseries
-                        var userPosts = {
-                            data: formatPostsForTimeseries(username, instagramIdAndPosts[1].data)
-                        };
-
-                        instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
-                            instagramTimeseries.addInstagramPostsToTimeSeries(userPosts).then(function(tsPostsStatus) {
-                                deferred.resolve(tsPostsStatus);
-                            }, function(error) {
-                                sentryClient.captureMessage(error);
-                                deferred.reject(error);
-                            });
-                        }, function(error) {
-                            sentryClient.captureMessage(error);
-                            deferred.reject(error);
-                        });
-                    } else {
-                        var error = 'Could not add instagram posts to ES'
-                        sentryClient.captureMessage(error);
-                        deferred.reject(error);
-                    }
-                }, function(error) {
-                    sentryClient.captureMessage(error);
-                    deferred.reject(error);
-                });
-            }, function(error) {
-                sentryClient.captureMessage(error);
-                deferred.reject(error);
-            });
-        }, function(error) {
-            sentryClient.captureMessage(error);
-            deferred.reject(error);
-        });
-    } else {
-        // If there is no access_token passed into the process
-        getInstagramFromUsernameWithoutAccessToken(data).then(function(instagramUserAndPosts) {
-            instagramUserAndPosts = formatInstagramUserAndPosts(instagramUserAndPosts);
-            // Add instagram posts to elasticsearch
-            addToElastic(data.username, instagramUserAndPosts[1], instagramUserAndPosts[0], true).then(function(status) {
-                if (status) {
-                    // Process the user to be added to Timeseries
-                    var userProfiles = {
-                        data: [formatForTimeseries(instagramUserAndPosts[0].data)]
-                    };
-
-                    // Process the posts to be added to Timeseries
-                    var userPosts = {
-                        data: formatPostsForTimeseries(data.username, instagramUserAndPosts[1].data)
-                    };
-
-                    instagramTimeseries.addInstagramUsersToTimeSeries(userProfiles).then(function(tsStatus) {
-                        instagramTimeseries.addInstagramPostsToTimeSeries(userPosts).then(function(tsPostsStatus) {
-                            var apiData = {
-                                'network': 'Instagram',
-                                'username': data.username,
-                                'fullname': instagramUserAndPosts[0] && instagramUserAndPosts[0].data && instagramUserAndPosts[0].data.full_name || ''
-                            };
-                            // request({
-                            //     url: 'https://tabulae.newsai.org/tasks/socialUsernameToDetails',
-                            //     method: 'POST',
-                            //     json: apiData,
-                            //     auth: {
-                            //         user: 'jebqsdFMddjuwZpgFrRo',
-                            //         password: ''
-                            //     }
-                            // }, function(error, response, body) {
-                            //     if (!error && response.statusCode == 200) {
-                            //         console.log('User sent to be changed in details');
-                            //         deferred.resolve(tsPostsStatus);
-                            //     } else {
-                            //         if (response.statusCode !== 500) {
-                            //             console.error(body);
-                            //             sentryClient.captureMessage(body);
-                            //             deferred.reject(new Error(body));
-                            //         } else {
-                            //             deferred.resolve(tsPostsStatus);
-                            //         }
-                            //     }
-                            // });
-                            deferred.resolve(tsPostsStatus);
-                        }, function(error) {
-                            sentryClient.captureMessage(error);
-                            deferred.reject(error);
-                        });
+                        deferred.resolve(tsPostsStatus);
                     }, function(error) {
                         sentryClient.captureMessage(error);
                         deferred.reject(error);
                     });
-                } else {
-                    var error = 'Could not add instagram posts to ES'
+                }, function(error) {
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
-                }
-            }, function(error) {
+                });
+            } else {
+                var error = 'Could not add instagram posts to ES'
                 sentryClient.captureMessage(error);
                 deferred.reject(error);
-            });
+            }
         }, function(error) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         });
-    }
+    }, function(error) {
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
+    });
 
     return deferred.promise;
+}
+
+function processInstagramUsers(data) {
+    var allPromises = [];
+
+    var instagramUsernames = data.username.split(',');
+    for (var i = 0; i < instagramUsernames.length; i++) {
+        var toExecute = processInstagramUser(instagramUsernames[i]);
+        allPromises.push(toExecute);
+    }
+
+    return Q.all(allPromises);
 }
 
 // Begin subscription
@@ -550,7 +436,7 @@ instagram.subscribe(topicName, subscriptionName, function(err, message) {
         throw err;
     }
     console.log('Received request to process instagram feed ' + message.data.username);
-    processInstagramUser(message.data)
+    processInstagramUsers(message.data)
         .then(function(status) {
             rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
                 .then(function(htmlString) {
