@@ -26,11 +26,6 @@ var topicName = 'process-instagram-feed';
 var sentryClient = new raven.Client('https://a026de7b0e4b40448b769ad8d17c8a90:d7fd5ae279134c51bc10e37c5485b93f@sentry.io/106015');
 sentryClient.patchGlobal();
 
-function delay(){
-    console.log('Delay');
-    return Q.delay(6000);
- }
-
 function sendInstagramProfileToPubsub(data) {
     var allPromises = [];
     for (var i = data.length - 1; i >= 0; i--) {
@@ -38,17 +33,7 @@ function sendInstagramProfileToPubsub(data) {
         var toExecute = instagram.addFeedToPubSub(topicName, data[i]);
         allPromises.push(toExecute);
     }
-    return allPromises.reduce(Q.when, Q());
-}
-
-function preSendInstagramProfileToPubsub(data) {
-    var allPromises = [];
-    for (var i = data.length - 1; i >= 0; i--) {
-        var toExecute = instagram.sendInstagramProfileToPubsub(data);
-        allPromises.push(toExecute);
-        allPromises.push(delay);
-    }
-    return allPromises.reduce(Q.when, Q());
+    return Q.allSettled(allPromises);
 }
 
 function syncIGAndES() {
@@ -63,7 +48,7 @@ function syncIGAndES() {
             };
             allData.push(currentData);
         }
-        preSendInstagramProfileToPubsub(allData).then(function(status) {
+        sendInstagramProfileToPubsub(allData).then(function(status) {
             rp('https://hchk.io/92155727-1536-47d6-b3df-5eb558d5f561')
                 .then(function(htmlString) {
                     deferred.resolve(status);
