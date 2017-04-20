@@ -309,8 +309,6 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
         var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
         var tags = caption.match(/#[a-z]+/gi) || [];
 
-        console.log(instagramPosts[i]);
-
         var post = {
             'CreatedAt': moment.unix(parseInt(instagramPosts[i].taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
             'Video': instagramPosts[i].video_url || '',
@@ -327,8 +325,6 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
             'InstagramHeight': instagramPosts[i].dimensions && instagramPosts[i].dimensions.height || 0,
             'InstagramWidth': instagramPosts[i].dimensions && instagramPosts[i].dimensions.width || 0,
         };
-
-        console.log(post);
 
         posts.push(post);
     }
@@ -434,40 +430,40 @@ function processInstagramUsers(data) {
     return Q.all(allPromises);
 }
 
-// // Begin subscription
-// instagram.subscribe(topicName, subscriptionName, function(err, message) {
-//     // Any errors received are considered fatal.
-//     if (err) {
-//         console.error(err);
-//         sentryClient.captureMessage(err);
-//         throw err;
-//     }
-//     console.log('Received request to process instagram feed ' + message.data.username);
-//     processInstagramUsers(message.data)
-//         .then(function(status) {
-//             rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
-//                 .then(function(htmlString) {
-//                     console.log('Completed execution for ' + message.data.username);
-//                 })
-//                 .catch(function(err) {
-//                     console.error(err);
-//                 });
-//         }, function(error) {
-//             console.error(error);
-//             sentryClient.captureMessage(error);
-//         });
-// });
+// Begin subscription
+instagram.subscribe(topicName, subscriptionName, function(err, message) {
+    // Any errors received are considered fatal.
+    if (err) {
+        console.error(err);
+        sentryClient.captureMessage(err);
+        throw err;
+    }
+    console.log('Received request to process instagram feed ' + message.data.username);
+    processInstagramUsers(message.data)
+        .then(function(status) {
+            rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
+                .then(function(htmlString) {
+                    console.log('Completed execution for ' + message.data.username);
+                })
+                .catch(function(err) {
+                    console.error(err);
+                });
+        }, function(error) {
+            console.error(error);
+            sentryClient.captureMessage(error);
+        });
+});
 
 // Code for testing the functions above
-var message = {
-    data: {
-        username: 'chrisburkard'
-    }
-};
+// var message = {
+//     data: {
+//         username: 'chrisburkard'
+//     }
+// };
 
-processInstagramUser(message.data.username)
-    .then(function(status) {
-        console.log('Completed execution for ' + message.data.username);
-    }, function(error) {
-        console.error(error);
-    });
+// processInstagramUser(message.data.username)
+//     .then(function(status) {
+//         console.log('Completed execution for ' + message.data.username);
+//     }, function(error) {
+//         console.error(error);
+//     });
