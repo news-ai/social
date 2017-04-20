@@ -33,7 +33,12 @@ function sendInstagramProfileToPubsub(data) {
         var toExecute = instagram.addFeedToPubSub(topicName, data[i]);
         allPromises.push(toExecute);
     }
-    return Q.allSettled(allPromises);
+
+    return allPromises.reduce(function (previous, job) {
+        return previous.delay(6000).then(function () {
+            return job();
+        });
+    }, Q());
 }
 
 function syncIGAndES() {

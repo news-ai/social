@@ -415,19 +415,13 @@ function processInstagramUser(username) {
     return deferred.promise;
 }
 
-function delay(ms) {
-    var deferred = Q.defer();
-    setTimeout( deferred.resolve, ms);
-    return deferred.promise;
-}
-
 function processInstagramUsers(data) {
     var allPromises = [];
 
     var instagramUsernames = data.username.split(',');
     for (var i = 0; i < instagramUsernames.length; i++) {
         var toExecute = processInstagramUser(instagramUsernames[i]);
-        allPromises.push(toExecute.then(delay(7500)));
+        allPromises.push(toExecute);
     }
 
     return Q.all(allPromises);
