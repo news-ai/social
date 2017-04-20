@@ -221,7 +221,7 @@ function getInstagramFromPostId(postId) {
     request('https://www.instagram.com/p/' + postId + '/?__a=1', function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramPost = JSON.parse(body);
-            var instagramMedia = instagramPost.media;
+            var instagramMedia = instagramPost && instagramPost.graphql && instagramPost.graphql.shortcode_media;
             deferred.resolve(instagramMedia);
         } else {
             console.error(body);
@@ -304,25 +304,32 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
 
     var posts = [];
     for (var i = instagramPosts.length - 1; i >= 0; i--) {
+        var caption = instagramPosts[i].edge_media_to_caption && instagramPosts[i].edge_media_to_caption.edges && instagramPosts[i].edge_media_to_caption.edges[0] && instagramPosts[i].edge_media_to_caption.edges[0].node && instagramPosts[i].edge_media_to_caption.edges[0].node.text;
+
         var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
-        var tags = instagramPosts[i].caption && instagramPosts[i].caption.match(/#[a-z]+/gi) || [];
+        var tags = caption.match(/#[a-z]+/gi) || [];
+
+        console.log(instagramPosts[i]);
 
         var post = {
-            'CreatedAt': moment.unix(parseInt(instagramPosts[i].date, 10)).format('YYYY-MM-DDTHH:mm:ss'),
+            'CreatedAt': moment.unix(parseInt(instagramPosts[i].taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
             'Video': instagramPosts[i].video_url || '',
-            'Image': instagramPosts[i].display_src || '',
+            'Image': instagramPosts[i].display_url || '',
             'Location': instagramPosts[i].location && instagramPosts[i].location.name || '',
             'Coordinates': '',
             'InstagramId': instagramId || '',
-            'Caption': instagramPosts[i].caption || '',
-            'Likes': instagramPosts[i].likes && instagramPosts[i].likes.count || 0,
-            'Comments': instagramPosts[i].comments && instagramPosts[i].comments.count || 0,
-            'Link': 'https://www.instagram.com/p/' + instagramPosts[i].code + '/' || '',
+            'Caption': caption || '',
+            'Likes': instagramPosts[i].edge_media_preview_like && instagramPosts[i].edge_media_preview_like.count || 0,
+            'Comments': instagramPosts[i].edge_media_to_comment && instagramPosts[i].edge_media_to_comment.count || 0,
+            'Link': 'https://www.instagram.com/p/' + instagramPosts[i].shortcode + '/' || '',
             'Tags': tags || [],
             'id': instagramId || '',
             'InstagramHeight': instagramPosts[i].dimensions && instagramPosts[i].dimensions.height || 0,
             'InstagramWidth': instagramPosts[i].dimensions && instagramPosts[i].dimensions.width || 0,
         };
+
+        console.log(post);
+
         posts.push(post);
     }
 
@@ -427,41 +434,40 @@ function processInstagramUsers(data) {
     return Q.all(allPromises);
 }
 
-// Begin subscription
-instagram.subscribe(topicName, subscriptionName, function(err, message) {
-    // Any errors received are considered fatal.
-    if (err) {
-        console.error(err);
-        sentryClient.captureMessage(err);
-        throw err;
-    }
-    console.log('Received request to process instagram feed ' + message.data.username);
-    processInstagramUsers(message.data)
-        .then(function(status) {
-            rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
-                .then(function(htmlString) {
-                    console.log('Completed execution for ' + message.data.username);
-                })
-                .catch(function(err) {
-                    console.error(err);
-                });
-        }, function(error) {
-            console.error(error);
-            sentryClient.captureMessage(error);
-        });
-});
-
-// // Code for testing the functions above
-// var message = {
-//     data: {
-//         access_token: '',
-//         username: 'coolbeancool'
+// // Begin subscription
+// instagram.subscribe(topicName, subscriptionName, function(err, message) {
+//     // Any errors received are considered fatal.
+//     if (err) {
+//         console.error(err);
+//         sentryClient.captureMessage(err);
+//         throw err;
 //     }
-// };
+//     console.log('Received request to process instagram feed ' + message.data.username);
+//     processInstagramUsers(message.data)
+//         .then(function(status) {
+//             rp('https://hchk.io/27266425-6884-400a-8c54-4a9f3e2c4026')
+//                 .then(function(htmlString) {
+//                     console.log('Completed execution for ' + message.data.username);
+//                 })
+//                 .catch(function(err) {
+//                     console.error(err);
+//                 });
+//         }, function(error) {
+//             console.error(error);
+//             sentryClient.captureMessage(error);
+//         });
+// });
 
-// processInstagramUser(message.data)
-//     .then(function(status) {
-//         console.log('Completed execution for ' + message.data.username);
-//     }, function(error) {
-//         console.error(error);
-//     });
+// Code for testing the functions above
+var message = {
+    data: {
+        username: 'chrisburkard'
+    }
+};
+
+processInstagramUser(message.data.username)
+    .then(function(status) {
+        console.log('Completed execution for ' + message.data.username);
+    }, function(error) {
+        console.error(error);
+    });
