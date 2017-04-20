@@ -37,6 +37,15 @@ function sendInstagramProfileToPubsub(data) {
         console.log('Starting execution for ' + data[i].username);
         var toExecute = instagram.addFeedToPubSub(topicName, data[i]);
         allPromises.push(toExecute);
+    }
+    return allPromises.reduce(Q.when, Q());
+}
+
+function preSendInstagramProfileToPubsub(data) {
+    var allPromises = [];
+    for (var i = data.length - 1; i >= 0; i--) {
+        var toExecute = instagram.sendInstagramProfileToPubsub(data);
+        allPromises.push(toExecute);
         allPromises.push(delay);
     }
     return allPromises.reduce(Q.when, Q());
@@ -54,7 +63,7 @@ function syncIGAndES() {
             };
             allData.push(currentData);
         }
-        sendInstagramProfileToPubsub(allData).then(function(status) {
+        preSendInstagramProfileToPubsub(allData).then(function(status) {
             rp('https://hchk.io/92155727-1536-47d6-b3df-5eb558d5f561')
                 .then(function(htmlString) {
                     deferred.resolve(status);
