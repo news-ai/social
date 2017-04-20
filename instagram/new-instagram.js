@@ -415,9 +415,10 @@ function processInstagramUser(username) {
     return deferred.promise;
 }
 
-function delay(){
-    console.log('Delay');
-    return Q.delay(6000);
+function delay(ms) {
+    var deferred = Q.defer();
+    setTimeout( deferred.resolve, ms);
+    return deferred.promise;
 }
 
 function processInstagramUsers(data) {
@@ -426,8 +427,7 @@ function processInstagramUsers(data) {
     var instagramUsernames = data.username.split(',');
     for (var i = 0; i < instagramUsernames.length; i++) {
         var toExecute = processInstagramUser(instagramUsernames[i]);
-        allPromises.push(toExecute);
-        allPromises.push(delay);
+        allPromises.push(toExecute.then(delay(7500)));
     }
 
     return Q.all(allPromises);
