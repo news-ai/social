@@ -43,34 +43,7 @@ function addToElastic(username, posts, profile, isFormatted) {
         var newInstagramPost = {};
         var newInstagramPostId = posts.data[i].id;
 
-        if (!isFormatted) {
-            newInstagramPost.CreatedAt = moment.unix(parseInt(posts.data[i].created_time, 10)).format('YYYY-MM-DDTHH:mm:ss');
-            newInstagramPost.Video = posts.data[i].videos && posts.data[i].videos.standard_resolution && posts.data[i].videos.standard_resolution.url || '';
-            newInstagramPost.Image = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.url || '';
-            newInstagramPost.Location = posts.data[i].location && posts.data[i].location.name || '';
-
-            var coordinates = '';
-            if (posts.data[i].location && posts.data[i].location.latitude && posts.data[i].location.longitude) {
-                coordinates = posts.data[i].location.latitude.toString() + ',' + posts.data[i].location.longitude.toString();
-            }
-
-            newInstagramPost.Coordinates = coordinates;
-            newInstagramPost.InstagramId = posts.data[i].id || '';
-            newInstagramPost.Caption = posts.data[i].caption && posts.data[i].caption.text || '';
-            newInstagramPost.Likes = posts.data[i].likes && posts.data[i].likes.count || 0;
-            newInstagramPost.Comments = posts.data[i].comments && posts.data[i].comments.count || 0;
-            newInstagramPost.Link = posts.data[i].link || '';
-
-            newInstagramPost.InstagramWidth = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.width || 0;
-            newInstagramPost.InstagramHeight = posts.data[i].images && posts.data[i].images.standard_resolution && posts.data[i].images.standard_resolution.height || 0;
-
-            var tags = [];
-            if (posts.data[i].tags && posts.data[i].tags.length > 0) {
-                tags = posts.data[i].tags;
-            }
-
-            newInstagramPost.Tags = tags;
-        } else {
+        if (isFormatted) {
             newInstagramPost = posts.data[i];
             delete newInstagramPost.id;
         }
@@ -170,46 +143,6 @@ function getInstagramIdFromUsername(username) {
             sentryClient.captureMessage(error);
             deferred.reject(new Error(error));
         }
-    });
-
-    return deferred.promise;
-}
-
-function getInstagramProfileFromUsernameWithAccessToken(data, userid) {
-    var deferred = Q.defer();
-
-    request('https://api.instagram.com/v1/users/' + userid + '/?access_token=' + data.access_token, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            var instagramProfile = JSON.parse(body);
-            deferred.resolve(instagramProfile);
-        } else {
-            console.error(body);
-            sentryClient.captureMessage(body);
-            deferred.reject(new Error(body));
-        }
-    })
-
-    return deferred.promise;
-}
-
-function getInstagramFromUsernameWithAccessToken(data) {
-    var deferred = Q.defer();
-
-    getInstagramIdFromUsername(data.username).then(function(userid) {
-        request('https://api.instagram.com/v1/users/' + userid + '/media/recent/?access_token=' + data.access_token, function(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                var instagramMedia = JSON.parse(body);
-                deferred.resolve([userid, instagramMedia]);
-            } else {
-                console.error(body);
-                sentryClient.captureMessage(body);
-                deferred.reject(new Error(body));
-            }
-        })
-    }, function(error) {
-        console.error(error);
-        sentryClient.captureMessage(error);
-        deferred.reject(new Error(error));
     });
 
     return deferred.promise;

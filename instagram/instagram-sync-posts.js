@@ -118,11 +118,14 @@ function syncIGAndES() {
             for (var i = instagramPosts.length - 1; i >= 0; i--) {
                 if (instagramPosts[i].state === 'fulfilled') {
                     instagramPosts[i] = instagramPosts[i].value;
-                    var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
+                    var instagramId = [instagramPosts[i].graphql.shortcode_media.id, instagramPosts[i].graphql.shortcode_media.owner.id].join('_');
+
+                    var caption = instagramPosts[i].graphql.shortcode_media.edge_media_to_caption && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges[0] && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges[0].node && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges[0].node.text;
+
                     var tags = instagramPosts[i].caption && instagramPosts[i].caption.match(/#[a-z]+/gi) || [];
 
                     var post = {
-                        'CreatedAt': moment.unix(parseInt(instagramPosts[i].date, 10)).format('YYYY-MM-DDTHH:mm:ss'),
+                        'CreatedAt': moment.unix(parseInt(instagramPosts[i].graphql.shortcode_media.taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
                         'Video': instagramPosts[i].video_url || '',
                         'Image': instagramPosts[i].display_src || '',
                         'Location': instagramPosts[i].location && instagramPosts[i].location.name || '',
