@@ -118,26 +118,25 @@ function syncIGAndES() {
             for (var i = instagramPosts.length - 1; i >= 0; i--) {
                 if (instagramPosts[i].state === 'fulfilled') {
                     instagramPosts[i] = instagramPosts[i].value;
-                    var instagramId = [instagramPosts[i].graphql.shortcode_media.id, instagramPosts[i].graphql.shortcode_media.owner.id].join('_');
+                    instagramPosts[i] = instagramPosts[i].graphql && instagramPosts[i].graphql.shortcode_media;
 
-                    var caption = instagramPosts[i].graphql.shortcode_media.edge_media_to_caption && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges[0] && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges[0].node && instagramPosts[i].graphql.shortcode_media.edge_media_to_caption.edges[0].node.text;
-
-                    var tags = instagramPosts[i].caption && instagramPosts[i].caption.match(/#[a-z]+/gi) || [];
+                    var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
+                    var caption = instagramPosts[i].edge_media_to_caption && instagramPosts[i].edge_media_to_caption.edges && instagramPosts[i].edge_media_to_caption.edges[0] && instagramPosts[i].edge_media_to_caption.edges[0].node && instagramPosts[i].edge_media_to_caption.edges[0].node.text;
+                    var tags = caption.match(/#[a-z]+/gi) || [];
 
                     var post = {
-                        'CreatedAt': moment.unix(parseInt(instagramPosts[i].graphql.shortcode_media.taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
+                        'CreatedAt': moment.unix(parseInt(instagramPosts[i].taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
                         'Video': instagramPosts[i].video_url || '',
-                        'Image': instagramPosts[i].display_src || '',
+                        'Image': instagramPosts[i].display_url || '',
                         'Location': instagramPosts[i].location && instagramPosts[i].location.name || '',
                         'Coordinates': '',
                         'InstagramId': instagramId || '',
-                        'Caption': instagramPosts[i].caption || '',
-                        'Likes': instagramPosts[i].likes && instagramPosts[i].likes.count || 0,
-                        'Comments': instagramPosts[i].comments && instagramPosts[i].comments.count || 0,
-                        'Link': 'https://www.instagram.com/p/' + instagramPosts[i].code + '/' || '',
+                        'Caption': caption || '',
+                        'Likes': instagramPosts[i].edge_media_preview_like && instagramPosts[i].edge_media_preview_like.count || 0,
+                        'Comments': instagramPosts[i].edge_media_to_comment && instagramPosts[i].edge_media_to_comment.count || 0,
+                        'Link': 'https://www.instagram.com/p/' + instagramPosts[i].shortcode + '/' || '',
                         'Tags': tags || [],
                         'id': instagramId || '',
-                        'username': instagramPosts[i].owner && instagramPosts[i].owner.username || '',
                         'InstagramHeight': instagramPosts[i].dimensions && instagramPosts[i].dimensions.height || 0,
                         'InstagramWidth': instagramPosts[i].dimensions && instagramPosts[i].dimensions.width || 0,
                     };
