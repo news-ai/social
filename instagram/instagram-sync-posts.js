@@ -110,15 +110,12 @@ function syncIGAndES() {
     var deferred = Q.defer();
 
     instagram.getInstagramPostsFromEsLastWeek(0, []).then(function(data) {
-        console.log(data.length);
         instagram.getInstagramPostsFromAPI(data).then(function(instagramPosts) {
-            console.log(instagramPosts.length);
             var posts = [];
 
             for (var i = instagramPosts.length - 1; i >= 0; i--) {
                 if (instagramPosts[i].state === 'fulfilled') {
                     instagramPosts[i] = instagramPosts[i].value;
-                    instagramPosts[i] = instagramPosts[i].graphql && instagramPosts[i].graphql.shortcode_media;
 
                     var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
                     var caption = instagramPosts[i].edge_media_to_caption && instagramPosts[i].edge_media_to_caption.edges && instagramPosts[i].edge_media_to_caption.edges[0] && instagramPosts[i].edge_media_to_caption.edges[0].node && instagramPosts[i].edge_media_to_caption.edges[0].node.text;

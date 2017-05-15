@@ -99,7 +99,7 @@ Creating a timeseries of data for both Twitter and Instagram data.
 
 ### Compute Engine
 
-`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "feeds-3"`
+`gcloud compute --project "newsai-1166" ssh --zone "us-east1-c" "social-1"`
 
 ### Microsoft Azure
 

@@ -124,7 +124,7 @@ function getInstagramFromPostLink(postLink) {
     request(postLink + '?__a=1', function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var instagramPost = JSON.parse(body);
-            var instagramMedia = instagramPost.media;
+            var instagramMedia = instagramPost.graphql && instagramPost.graphql.shortcode_media;
             deferred.resolve(instagramMedia);
         } else {
             deferred.reject(new Error(body));
