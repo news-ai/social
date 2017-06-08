@@ -119,7 +119,7 @@ function syncIGAndES() {
 
                     var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
                     var caption = instagramPosts[i].edge_media_to_caption && instagramPosts[i].edge_media_to_caption.edges && instagramPosts[i].edge_media_to_caption.edges.length > 0 && instagramPosts[i].edge_media_to_caption.edges[0] && instagramPosts[i].edge_media_to_caption.edges[0].node && instagramPosts[i].edge_media_to_caption.edges[0].node.text;
-                    var tags = caption.match(/#[a-z]+/gi) || [];
+                    var tags = caption && caption.match(/#[a-z]+/gi) || [];
 
                     var post = {
                         'CreatedAt': moment.unix(parseInt(instagramPosts[i].taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
