@@ -237,10 +237,10 @@ function formatInstagramUserAndPosts(instagramUserAndPosts) {
 
     var posts = [];
     for (var i = instagramPosts.length - 1; i >= 0; i--) {
-        var caption = instagramPosts[i].edge_media_to_caption && instagramPosts[i].edge_media_to_caption.edges && instagramPosts[i].edge_media_to_caption.edges[0] && instagramPosts[i].edge_media_to_caption.edges[0].node && instagramPosts[i].edge_media_to_caption.edges[0].node.text;
+        var caption = instagramPosts[i].edge_media_to_caption && instagramPosts[i].edge_media_to_caption.edges && instagramPosts[i].edge_media_to_caption.edges.length > 0 && instagramPosts[i].edge_media_to_caption.edges[0] && instagramPosts[i].edge_media_to_caption.edges[0].node && instagramPosts[i].edge_media_to_caption.edges[0].node.text;
 
         var instagramId = [instagramPosts[i].id, instagramPosts[i].owner.id].join('_');
-        var tags = caption.match(/#[a-z]+/gi) || [];
+        var tags = caption && caption.match(/#[a-z]+/gi) || [];
 
         var post = {
             'CreatedAt': moment.unix(parseInt(instagramPosts[i].taken_at_timestamp, 10)).format('YYYY-MM-DDTHH:mm:ss'),
