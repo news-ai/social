@@ -1,12 +1,8 @@
 'use strict';
 
-var Q = require('q');
 var elasticsearch = require('elasticsearch');
 var moment = require('moment');
-var gcloud = require('google-cloud')({
-    projectId: 'newsai-1166'
-});
-var pubsub = gcloud.pubsub();
+var Q = require('q');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
@@ -15,171 +11,220 @@ var elasticSearchClient = new elasticsearch.Client({
     rejectUnauthorized: false
 });
 
-var twitter = exports;
+var twitterTimeseries = require('../time-series/twitter');
 
-function getTwitterUserPageFromEs(offset) {
-    var deferred = Q.defer();
+var twitterShared = exports;
 
-    elasticSearchClient.search({
-        index: 'tweets',
-        type: 'user',
-        body: {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {}
-                    }
-                }
-            },
-            "size": 100,
-            "from": 100 * offset,
-        }
-    }).then(function(resp) {
-        var hits = resp.hits.hits;
-        deferred.resolve(hits);
-    }, function(err) {
-        console.error(err.message);
-        deferred.reject(err);
-    });
+function formatToFeed(tweet, username) {
+    return {
+        'CreatedAt': tweet.CreatedAt,
+        'Type': 'Tweet',
 
-    return deferred.promise;
+        // Headlines
+        'Title': '',
+        'Url': '',
+        'Summary': '',
+        'FeedURL': '',
+        'PublicationId': 0,
+
+        // Tweet specific
+        'Username': username,
+        'TweetId': tweet.TweetId,
+        'TweetIdStr': tweet.TweetIdStr,
+        'TwitterLikes': tweet.Likes,
+        'TwitterRetweets': tweet.Retweets,
+
+        // Instagram + Twitter
+        'Text': tweet.Text
+    };
 }
 
-function getTwitterProfilesFromEs(offset, allData) {
+// Get last 20 tweets for a particular user
+function getTweetsFromUsername(twitterClient, sentryClient, username) {
     var deferred = Q.defer();
 
-    getTwitterUserPageFromEs(offset).then(function(data) {
-        if (data.length === 0) {
-            deferred.resolve(allData);
+    twitterClient.get('statuses/user_timeline', {
+        screen_name: username,
+        count: 10
+    }, function(error, tweets, response) {
+        if (!error) {
+            deferred.resolve(tweets);
         } else {
-            var newData = allData.concat(data);
-            deferred.resolve(getTwitterProfilesFromEs(offset + 1, newData));
+            console.error(error);
+            sentryClient.captureMessage(error);
+            deferred.reject(new Error(error));
         }
     });
 
     return deferred.promise;
 }
 
-function getTweetPageFromEsLastWeek(offset) {
+// Follow this user on Twitter to stream tweets
+function followOnTwitter(twitterClient, sentryClient, user) {
     var deferred = Q.defer();
 
-    var dateTo = moment().format('YYYY-MM-DD');
-    var dateFrom = moment().subtract(7, 'd')
-    var lastWeek = dateFrom.format('YYYY-MM-DDTHH:mm:ss');
-
-    elasticSearchClient.search({
-        index: 'tweets',
-        type: 'tweet',
-        body: {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {}
-                    },
-                    "filter": {
-                        "range": {
-                            "data.CreatedAt": {
-                                "gte": lastWeek
-                            }
-                        }
-                    }
-                }
-            },
-            "sort": [{
-                "data.CreatedAt": {
-                    "order": "desc",
-                    "mode": "avg"
-                }
-            }],
-            "size": 100,
-            "from": 100 * offset,
+    twitterClient.post('friendships/create', {
+        user_id: user.id,
+        follow: true
+    }, function(error, response) {
+        if (error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
         }
-    }).then(function(resp) {
-        var hits = resp.hits.hits;
-        deferred.resolve(hits);
-    }, function(err) {
-        console.error(err.message);
-        deferred.reject(err);
+
+        // Add user to timeseries
+        var twitterProfile = [user]
+        twitterTimeseries.addTwitterUsersToTimeSeries(twitterProfile).then(function(status) {
+            deferred.resolve(status);
+        }, function(error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        });
     });
 
     return deferred.promise;
 }
 
-function getTweetPageFromEsLastDay(offset) {
+// Add these tweets to ElasticSearch
+// username here is the base parent username.
+// Not just a username of any user.
+function addToElastic(sentryClient, username, tweets, tweetESType, feedESType) {
     var deferred = Q.defer();
 
-    var dateTo = moment().format('YYYY-MM-DD');
-    var dateFrom = moment().subtract(1, 'd')
-    var lastWeek = dateFrom.format('YYYY-MM-DDTHH:mm:ss');
+    var user = tweets[0].user;
+    var tweetsToAdd = [];
 
-    elasticSearchClient.search({
-        index: 'tweets',
-        type: 'tweet',
-        body: {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {}
-                    },
-                    "filter": {
-                        "range": {
-                            "data.CreatedAt": {
-                                "gte": lastWeek
-                            }
-                        }
-                    }
-                }
-            },
-            "sort": [{
-                "data.CreatedAt": {
-                    "order": "desc",
-                    "mode": "avg"
-                }
-            }],
-            "size": 100,
-            "from": 100 * offset,
+    for (var i = tweets.length - 1; i >= 0; i--) {
+        var coordinates = '';
+        if (tweets[i].coordinates && tweets[i].coordinates.coordinates && tweets[i].coordinates.coordinates.length === 2) {
+            coordinates = tweets[i].coordinates.coordinates[0].toString() + ',' + tweets[i].coordinates.coordinates[1].toString();
         }
-    }).then(function(resp) {
-        var hits = resp.hits.hits;
-        deferred.resolve(hits);
-    }, function(err) {
-        console.error(err.message);
-        deferred.reject(err);
+
+        var isRetweeted = false
+        if (tweets[i].retweeted_status && tweets[i].retweeted_status.created_at) {
+            isRetweeted = true;
+        }
+
+        tweetsToAdd.push({
+            'TweetId': tweets[i].id,
+            'TweetIdStr': tweets[i].id_str,
+            'Text': tweets[i].text,
+            'Likes': tweets[i].favorite_count,
+            'Retweets': tweets[i].retweet_count,
+            'Place': tweets[i].place && tweets[i].place.full_name || '',
+            'Coordinates': coordinates,
+            'Retweeted': isRetweeted,
+            'CreatedAt': moment(tweets[i].created_at).format('YYYY-MM-DDTHH:mm:ss') // damn you Twitter and your dates
+        });
+    }
+
+    var esActions = [];
+    for (var i = tweetsToAdd.length - 1; i >= 0; i--) {
+        // Add to tweets endpoint
+        var indexRecord = {
+            index: {
+                _index: 'tweets',
+                _type: tweetESType,
+                _id: tweetsToAdd[i].TweetId
+            }
+        };
+        var dataRecord = tweetsToAdd[i];
+        dataRecord.Username = username;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+
+        // Add to feeds endpoint
+        indexRecord = {
+            index: {
+                _index: 'feeds',
+                _type: feedESType,
+                _id: tweetsToAdd[i].TweetId
+            }
+        };
+        dataRecord = formatToFeed(tweetsToAdd[i], username);
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+    }
+
+    // Add user to ElasticSearch as well
+    var indexRecord = {
+        index: {
+            _index: 'tweets',
+            _type: 'user',
+            _id: username
+        }
+    };
+    var dataRecord = user;
+    dataRecord.Username = username;
+    esActions.push(indexRecord);
+    esActions.push({
+        data: dataRecord
     });
 
-    return deferred.promise;
-}
-
-function getTweetsFromEsLastWeek(offset, allData) {
-    var deferred = Q.defer();
-
-    getTweetPageFromEsLastWeek(offset).then(function(data) {
-        if (data.length === 0) {
-            deferred.resolve(allData);
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error || response && response.errors) {
+            if (!error) {
+                error = 'Could not send data to ES';
+            }
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
         } else {
-            var newData = allData.concat(data);
-            deferred.resolve(getTweetsFromEsLastWeek(offset + 1, newData));
+            twitterTimeseries.addTwitterPostsToTimeSeries(tweets).then(function(status) {
+                deferred.resolve(user);
+            }, function (error) {
+                sentryClient.captureMessage(error);
+                deferred.reject(error);
+            });
         }
     });
 
     return deferred.promise;
 }
 
-function getTweetsFromEsLastDay(offset, allData) {
+// Process a particular Twitter user
+function processTwitterUser(twitterClient, sentryClient, username, tweetESType, feedESType) {
     var deferred = Q.defer();
 
-    getTweetPageFromEsLastDay(offset).then(function(data) {
-        if (data.length === 0) {
-            deferred.resolve(allData);
-        } else {
-            var newData = allData.concat(data);
-            deferred.resolve(getTweetsFromEsLastDay(offset + 1, newData));
-        }
+    // Get tweets for a user
+    getTweetsFromUsername(twitterClient, sentryClient, username).then(function(tweets) {
+        // Add tweets to elasticsearch
+        addToElastic(sentryClient, username, tweets, tweetESType, feedESType).then(function(user) {
+            if (user) {
+                // Follow the user on the NewsAIHQ Twitter so we can stream the
+                // Tweets later.
+                followOnTwitter(twitterClient, sentryClient, user).then(function(response) {
+                    var apiData = {
+                        'network': 'Twitter',
+                        'username': username,
+                        'fullname': user.name || ''
+                    };
+                    deferred.resolve(true);
+                }, function(error) {
+                    sentryClient.captureMessage(error);
+                    deferred.reject(error);
+                });
+            } else {
+                var error = new Error('Elasticsearch add failed');
+                sentryClient.captureMessage(error);
+                deferred.reject(error);
+            }
+        }, function(error) {
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        });
+
+    }, function(error) {
+        sentryClient.captureMessage(error);
+        deferred.reject(error);
     });
 
     return deferred.promise;
 }
 
-twitter.getTweetsFromEsLastDay = getTweetsFromEsLastDay;
-twitter.getTweetsFromEsLastWeek = getTweetsFromEsLastWeek;
-twitter.getTwitterProfilesFromEs = getTwitterProfilesFromEs;
+twitterShared.processTwitterUser = processTwitterUser;
