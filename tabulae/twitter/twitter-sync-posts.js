@@ -24,17 +24,32 @@ sentryClient.patchGlobal();
 function runUpdates() {
     // Run one initially -- mostly for when testing
     console.log('Beginning run');
-    syncPostsTwitter.syncTwitterAndES(twitterClient, sentryClient).then(function(status) {
-        console.log(status);
+    syncPostsTwitter.syncTwitterAndES(twitterClient, sentryClient, 'tweet', 'feed').then(function(status) {
+        rp('https://hchk.io/a58c62df-5369-4476-b2f2-6c309949a75a')
+            .then(function(htmlString) {
+                console.log('Finished')
+            })
+            .catch(function(error) {
+                console.error(error);
+                sentryClient.captureMessage(error);
+            });
     }, function(error) {
+        sentryClient.captureMessage(error);
         console.error(error);
     })
 
     // Run feed code every fifteen minutes
     setInterval(function() {
         console.log('Updating Twitter posts');
-        syncPostsTwitter.syncTwitterAndES(twitterClient, sentryClient).then(function(status) {
-            console.log(status);
+        syncPostsTwitter.syncTwitterAndES(twitterClient, sentryClient, 'tweet', 'feed').then(function(status) {
+            rp('https://hchk.io/a58c62df-5369-4476-b2f2-6c309949a75a')
+                .then(function(htmlString) {
+                    console.log('Finished')
+                })
+                .catch(function(error) {
+                    console.error(error);
+                    sentryClient.captureMessage(error);
+                });
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
