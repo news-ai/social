@@ -25,7 +25,7 @@ var twitterClient = new Twitter({
     access_token_secret: 'NIYOhbJZSFzKNRJGVdtPlzMnzKet9bHdwH08ghw9TmzWr'
 });
 
-var twitterShared = require('../../twitter/twitter');
+var newTwitter = require('../../twitter/new-twitter');
 
 // Get a Google Cloud topic
 function getTopic(cb) {
@@ -43,7 +43,7 @@ function processTwitterUsers(data) {
 
     var twitterUsernames = data.username.split(',');
     for (var i = 0; i < twitterUsernames.length; i++) {
-        var toExecute = twitterShared.processTwitterUser(twitterClient, sentryClient, twitterUsernames[i], 'tweet', 'feed');
+        var toExecute = newTwitter.processTwitterUser(twitterClient, sentryClient, twitterUsernames[i], 'tweet', 'feed');
         allPromises.push(toExecute);
     }
 
