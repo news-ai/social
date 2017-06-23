@@ -12,16 +12,18 @@ Feed loops through all the feeds in the API that haven't been processed. It call
 
 Services to start (in this order):
 
-- `rss/rss.js`
-- `feed/feed.js`
-- `instagram/new-instagram.js`
-- `instagram/stream-instagram.js`
-- `instagram/sync-profiles.js`
-- `instagram/sync-posts.js`
-- `twitter/new-twitter.js`
-- `twitter/stream-twitter.js`
-- `twitter/sync-profiles.js`
-- `twitter/sync-posts.js`
+- `tabulae/rss/rss.js`
+- `tabulae/feed/feed.js`
+- `tabulae/instagram/new-instagram.js`
+- `tabulae/instagram/stream-instagram.js`
+- `tabulae/instagram/sync-profiles.js`
+- `tabulae/instagram/sync-posts.js`
+- `tabulae/twitter/new-twitter.js`
+- `twitter/twitter/stream-twitter.js`
+- `twitter/twitter/sync-profiles.js`
+- `twitter/twitter-sync-posts.js`
+- `md/twitter/new-twitter.js`
+- `md/twitter/twitter-sync-posts.js`
 
 ### RSS
 

@@ -198,6 +198,8 @@ function addToElastic(sentryClient, username, tweets, tweetESType, feedESType) {
 function processTwitterUser(twitterClient, sentryClient, username, tweetESType, feedESType) {
     var deferred = Q.defer();
 
+    username = username.toLowerCase();
+
     // Get tweets for a user
     getTweetsFromUsername(twitterClient, sentryClient, username).then(function(tweets) {
         // Add tweets to elasticsearch
@@ -206,11 +208,6 @@ function processTwitterUser(twitterClient, sentryClient, username, tweetESType, 
                 // Follow the user on the NewsAIHQ Twitter so we can stream the
                 // Tweets later.
                 followOnTwitter(twitterClient, sentryClient, user).then(function(response) {
-                    var apiData = {
-                        'network': 'Twitter',
-                        'username': username,
-                        'fullname': user.name || ''
-                    };
                     deferred.resolve(true);
                 }, function(error) {
                     sentryClient.captureMessage(error);
