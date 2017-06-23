@@ -2,6 +2,7 @@
 
 var Q = require('q');
 var elasticsearch = require('elasticsearch');
+var moment = require('moment');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({

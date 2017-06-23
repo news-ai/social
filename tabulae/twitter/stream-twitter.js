@@ -1,14 +1,15 @@
 'use strict';
 
 var rp = require('request-promise');
+var Q = require('q');
 var Stream = require('user-stream');
 var raven = require('raven');
+
+var streamTwitter = require('../../twitter/stream-twitter');
 
 // Instantiate a sentry client
 var sentryClient = new raven.Client('https://9af56ecaeca547abb4aa9f1bed0626d9:8146296e132a4dd2808b0babdaebfc4c@sentry.io/103129');
 sentryClient.patchGlobal();
-
-var streamTwitter = require('../../twitter/stream-twitter');
 
 // Initialize Twitter client and Twitter stream
 var stream = new Stream({
@@ -23,7 +24,6 @@ function processTweet(tweet) {
     var deferred = Q.defer();
 
     if (tweet && tweet.user && tweet.user.id) {
-        console.log(tweet);
         streamTwitter.findUsernameFromTwitterId(sentryClient, tweet.user.id).then(function(username) {
             streamTwitter.addTweetToEs(sentryClient, tweet, username).then(function(status) {
                 if (status) {
@@ -107,7 +107,7 @@ stream.on('garbage', function(tweet) {
 // Error checking
 stream.on('error', function(error) {
     // Restart stream
-    console.log('[ERROR]: ', error);
+    console.log('[ERROR]: ' + error);
     sentryClient.captureMessage('[ERROR]: ' + error);
 });
 
