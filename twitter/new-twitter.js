@@ -45,7 +45,7 @@ function getTweetsFromUsername(twitterClient, sentryClient, username) {
 
     twitterClient.get('statuses/user_timeline', {
         screen_name: username,
-        count: 10
+        count: 25
     }, function(error, tweets, response) {
         if (!error) {
             deferred.resolve(tweets);
