@@ -161,8 +161,10 @@ function addToElastic(sentryClient, username, tweets, tweetESType, feedESType) {
     var dataRecord = user;
     dataRecord.Username = username;
 
+    dataRecord.MediaDatabase = false;
+
     if (tweetESType === 'md-tweet') {
-        dataRecord.MediaDatabase = true
+        dataRecord.MediaDatabase = true;
     }
 
     esActions.push(indexRecord);

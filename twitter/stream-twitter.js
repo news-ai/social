@@ -49,8 +49,16 @@ function formatToFeed(tweet, username) {
     };
 }
 
-function addTweetToEs(tweet, username) {
+function addTweetToEs(tweet, twitterProfile) {
     var deferred = Q.defer();
+
+    var tweetType = 'tweet';
+    var feedType = 'feed';
+
+    if (twitterProfile.MediaDatabase && twitterProfile.MediaDatabase === true) {
+        tweetType = 'md-tweet';
+        feedType = 'md-tweet';
+    }
 
     var esActions = [];
 
@@ -85,7 +93,7 @@ function addTweetToEs(tweet, username) {
     };
 
     var dataRecord = tweetToAdd;
-    dataRecord.Username = username;
+    dataRecord.Username = twitterProfile.screen_name;
     esActions.push(indexRecord);
     esActions.push({
         data: dataRecord
@@ -98,7 +106,7 @@ function addTweetToEs(tweet, username) {
             _id: tweet.id
         }
     };
-    dataRecord = formatToFeed(tweetToAdd, username);
+    dataRecord = formatToFeed(tweetToAdd, twitterProfile.screen_name);
     esActions.push(indexRecord);
     esActions.push({
         data: dataRecord
@@ -126,7 +134,7 @@ function findUsernameFromTwitterId(twitterId) {
     }).then(function(body) {
         var hits = body.hits.hits;
         if (hits.length > 0) {
-            deferred.resolve(hits[0]._source.data.screen_name);
+            deferred.resolve(hits[0]._source.data);
         } else {
             var error = 'Did not get any hits';
             console.error(error);
@@ -146,8 +154,8 @@ function processTweet(tweet) {
     var deferred = Q.defer();
 
     if (tweet && tweet.user && tweet.user.id) {
-        findUsernameFromTwitterId(tweet.user.id).then(function(username) {
-            addTweetToEs(tweet, username).then(function(status) {
+        findUsernameFromTwitterId(tweet.user.id).then(function(twitterProfile) {
+            addTweetToEs(tweet, twitterProfile).then(function(status) {
                 if (status) {
                     deferred.resolve(true);
                 } else {
