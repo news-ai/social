@@ -1,5 +1,6 @@
 'use strict';
 
+var Q = require('q');
 var elasticsearch = require('elasticsearch');
 
 // Instantiate a elasticsearch client
@@ -8,6 +9,8 @@ var elasticSearchClient = new elasticsearch.Client({
     // log: 'trace',
     rejectUnauthorized: false
 });
+
+var twitterShared = exports;
 
 function formatToFeed(tweet, username) {
     return {
@@ -31,7 +34,7 @@ function formatToFeed(tweet, username) {
     };
 }
 
-function addTweetToEs(tweet, username) {
+function addTweetToEs(sentryClient, tweet, username) {
     var deferred = Q.defer();
 
     var esActions = [];
@@ -100,7 +103,7 @@ function addTweetToEs(tweet, username) {
     return deferred.promise;
 }
 
-function findUsernameFromTwitterId(twitterId) {
+function findUsernameFromTwitterId(sentryClient, twitterId) {
     var deferred = Q.defer();
 
     elasticSearchClient.search({
@@ -123,3 +126,6 @@ function findUsernameFromTwitterId(twitterId) {
 
     return deferred.promise;
 }
+
+twitterShared.findUsernameFromTwitterId = findUsernameFromTwitterId;
+twitterShared.addTweetToEs = addTweetToEs;
