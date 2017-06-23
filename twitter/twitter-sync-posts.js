@@ -57,6 +57,7 @@ function addESActionsToEs(sentryClient, esActions) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         }
+        console.log(response);
         deferred.resolve(response);
     });
 
@@ -192,6 +193,7 @@ function syncTwitterAndES(twitterClient, sentryClient, tweetESType, feedESType) 
 
             // Add the data to elasticsearch
             addToElastic(sentryClient, allTweets, tweetIdsToESIdAndUsername, tweetESType, feedESType).then(function(status) {
+                console.log(status);
                 twitterTimeseries.addTwitterPostsToTimeSeries(allTweets).then(function(timeseriesData) {
                     // Health check
                     deferred.resolve(timeseriesData);
