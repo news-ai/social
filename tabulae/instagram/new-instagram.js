@@ -12,7 +12,7 @@ var moment = require('moment');
 var raven = require('raven');
 
 var instagram = require('./instagram');
-var instagramTimeseries = require('../time-series/instagram');
+var instagramTimeseries = require('../../time-series/instagram');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({

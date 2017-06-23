@@ -12,8 +12,8 @@ Feed loops through all the feeds in the API that haven't been processed. It call
 
 Services to start (in this order):
 
-- `feed/feed.js`
 - `rss/rss.js`
+- `feed/feed.js`
 - `instagram/new-instagram.js`
 - `instagram/stream-instagram.js`
 - `instagram/sync-profiles.js`
