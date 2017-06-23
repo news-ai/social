@@ -1,0 +1,23 @@
+{
+  "name": "twitter-feed",
+  "version": "0.0.1",
+  "description": "Get data from Twitter",
+  "main": "twitter.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "NewsAI",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/datastore": "^0.1.1",
+    "elasticsearch": "^11.0.1",
+    "google-cloud": "^0.40.0",
+    "moment": "^2.15.1",
+    "q": "^1.4.1",
+    "raven": "^0.12.1",
+    "request": "^2.75.0",
+    "request-promise": "^4.1.1",
+    "twitter": "^1.4.0",
+    "user-stream": "0.0.7"
+  }
+}
