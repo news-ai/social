@@ -16,7 +16,7 @@
     "q": "^1.4.1",
     "raven": "^0.12.1",
     "request": "^2.75.0",
-    "request-promise": "^4.1.1",
+    "request-promise": "^4.2.1",
     "twitter": "^1.4.0",
     "user-stream": "0.0.7"
   }
