@@ -56,6 +56,7 @@ function addTweetToEs(tweet, twitterProfile, userInMediaDatabase) {
     var feedType = 'feed';
 
     if (userInMediaDatabase) {
+        console.log('Media Database Adding: ' + twitterProfile.screen_name)
         tweetType = 'md-tweet';
         feedType = 'md-tweet';
     }
