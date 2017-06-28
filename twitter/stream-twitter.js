@@ -161,7 +161,6 @@ function checkIfUserIsInMediaDatabase(twitterProfile) {
         id: 'twitter-' + username
     }, function (error, response) {
         if (error) {
-            console.error(error);
             deferred.resolve(false);
         } else {
             console.log('Media Database Tweet: ' + username)
