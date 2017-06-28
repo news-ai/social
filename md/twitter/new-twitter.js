@@ -1,5 +1,6 @@
 'use strict';
 
+var elasticsearch = require('elasticsearch');
 var rp = require('request-promise');
 var Q = require('q');
 var Twitter = require('twitter');
@@ -25,7 +26,137 @@ var twitterClient = new Twitter({
     access_token_secret: 'NIYOhbJZSFzKNRJGVdtPlzMnzKet9bHdwH08ghw9TmzWr'
 });
 
+// Instantiate a elasticsearch client
+var elasticSearchClient = new elasticsearch.Client({
+    host: 'https://newsai:XkJRNRx2EGCd6@search1.newsai.org',
+    // log: 'trace',
+    rejectUnauthorized: false
+});
+
 var newTwitter = require('../../twitter/new-twitter');
+
+function addESActionsToEs(esActions) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.bulk({
+        body: esActions
+    }, function(error, response) {
+        if (error) {
+            console.log(error);
+            sentryClient.captureMessage(error);
+            deferred.reject(error);
+        }
+        console.log(response);
+        deferred.resolve(response);
+    });
+
+    return deferred.promise;
+}
+
+function getTweetsPageFromEs(offset, username) {
+    var deferred = Q.defer();
+
+    elasticSearchClient.search({
+        index: 'tweets',
+        type: 'tweet',
+        body: {
+            "query": {
+                "match": {
+                    "data.Username": username
+                }
+            },
+            "size": 100,
+            "from": 100 * offset,
+        }
+    }).then(function(resp) {
+        var hits = resp.hits.hits;
+        deferred.resolve(hits);
+    }, function(err) {
+        console.error(err.message);
+        deferred.reject(err);
+    });
+
+    return deferred.promise;
+}
+
+function getTweetsFromEs(offset, username, allData) {
+    var deferred = Q.defer();
+
+    getTweetsPageFromEs(offset, username).then(function(tweets) {
+        if (tweets.length === 0) {
+            deferred.resolve(allData);
+        } else {
+            var newData = allData.concat(tweets);
+            deferred.resolve(getTweetsFromEs(offset + 1, username, newData));
+        }
+    });
+
+    return deferred.promise;
+}
+
+function moveTweetsToMDElastic(tweets) {
+    var deferred = Q.defer();
+    var esActions = [];
+
+    for (var i = 0; i < tweets.length; i++) {
+        var indexRecord = {
+            index: {
+                _index: 'tweets',
+                _type: 'md-tweet',
+                _id: tweets[i]._id
+            }
+        };
+
+        var dataRecord = tweets[i]._source && tweets[i]._source.data;
+        esActions.push(indexRecord);
+        esActions.push({
+            data: dataRecord
+        });
+    }
+
+    for (var i = 0; i < tweets.length; i++) {
+        var deleteRecord = {
+            delete: {
+                _index: 'tweets',
+                _type: 'tweet',
+                _id: tweets[i]._id
+            }
+        };
+
+        esActions.push(deleteRecord);
+    }
+
+    var allPromises = [];
+
+    var i, j, temp, chunk = 100;
+    for (i = 0, j = esActions.length; i < j; i += chunk) {
+        temp = esActions.slice(i, i + chunk);
+        var tempFunction = addESActionsToEs(temp);
+        allPromises.push(tempFunction);
+    }
+
+    return Q.all(allPromises);
+}
+
+function transitionTweetsToMd(twitterUsername) {
+    var deferred = Q.defer();
+
+    getTweetsFromEs(0, twitterUsername, []).then(function(tweets) {
+        moveTweetsToMDElastic(tweets).then(function(status) {
+            deferred.resolve(status);
+        }, function(error) {
+            sentryClient.captureMessage(error);
+            console.error(error);
+            deferred.reject(error);
+        });
+    }, function(error) {
+        sentryClient.captureMessage(error);
+        console.error(error);
+        deferred.reject(error);
+    });
+
+    return deferred.promise;
+}
 
 // Get a Google Cloud topic
 function getTopic(cb) {
@@ -45,6 +176,9 @@ function processTwitterUsers(data) {
     for (var i = 0; i < twitterUsernames.length; i++) {
         var toExecute = newTwitter.processTwitterUser(twitterClient, sentryClient, twitterUsernames[i], 'md-tweet', 'md-feed');
         allPromises.push(toExecute);
+
+        var tweetTransition = transitionTweetsToMd(twitterUsernames[i]);
+        allPromises.push(tweetTransition);
     }
 
     return Q.all(allPromises);
