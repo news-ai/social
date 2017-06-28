@@ -82,11 +82,11 @@ function getFeedsPageFromEs(indexName, typeName, offset, username) {
 function getFeedsFromEs(indexName, typeName, offset, username, allData) {
     var deferred = Q.defer();
 
-    getFeedsPageFromEs(indexName, typeName, offset, username).then(function(tweets) {
-        if (tweets.length === 0) {
+    getFeedsPageFromEs(indexName, typeName, offset, username).then(function(data) {
+        if (data.length === 0) {
             deferred.resolve(allData);
         } else {
-            var newData = allData.concat(tweets);
+            var newData = allData.concat(data);
             deferred.resolve(getFeedsFromEs(indexName, typeName, offset + 1, username, newData));
         }
     });
@@ -94,7 +94,7 @@ function getFeedsFromEs(indexName, typeName, offset, username, allData) {
     return deferred.promise;
 }
 
-function moveTweetsToMDElastic(tweets, feeds) {
+function moveSocialDataToMDElastic(tweets, feeds) {
     var deferred = Q.defer();
     var esActions = [];
 
