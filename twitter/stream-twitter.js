@@ -154,7 +154,7 @@ function checkIfUserIsInMediaDatabase(twitterProfile) {
     var deferred = Q.defer();
     var username = twitterProfile.screen_name.toLowerCase();
 
-    client.get({
+    elasticSearchClient.get({
         index: 'md',
         type: 'socialProfiles',
         id: 'twitter-' + username
