@@ -177,6 +177,7 @@ function processTweet(tweet) {
     if (tweet && tweet.user && tweet.user.id) {
         findUsernameFromTwitterId(tweet.user.id).then(function(twitterProfile) {
             checkIfUserIsInMediaDatabase(twitterProfile).then(function(userInMediaDatabase) {
+                console.log(userInMediaDatabase);
                 addTweetToEs(tweet, twitterProfile, userInMediaDatabase).then(function(status) {
                     if (status) {
                         deferred.resolve(true);
