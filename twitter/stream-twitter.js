@@ -49,13 +49,13 @@ function formatToFeed(tweet, username) {
     };
 }
 
-function addTweetToEs(tweet, twitterProfile) {
+function addTweetToEs(tweet, twitterProfile, userInMediaDatabase) {
     var deferred = Q.defer();
 
     var tweetType = 'tweet';
     var feedType = 'feed';
 
-    if (twitterProfile.MediaDatabase && twitterProfile.MediaDatabase === true) {
+    if (userInMediaDatabase) {
         tweetType = 'md-tweet';
         feedType = 'md-tweet';
     }
@@ -87,7 +87,7 @@ function addTweetToEs(tweet, twitterProfile) {
     var indexRecord = {
         index: {
             _index: 'tweets',
-            _type: 'tweet',
+            _type: tweetType,
             _id: tweet.id
         }
     };
@@ -102,7 +102,7 @@ function addTweetToEs(tweet, twitterProfile) {
     indexRecord = {
         index: {
             _index: 'feeds',
-            _type: 'feed',
+            _type: feedType,
             _id: tweet.id
         }
     };
@@ -150,20 +150,46 @@ function findUsernameFromTwitterId(twitterId) {
     return deferred.promise;
 }
 
+function checkIfUserIsInMediaDatabase(twitterProfile) {
+    var deferred = Q.defer();
+    var username = twitterProfile.screen_name.toLowerCase();
+
+    client.get({
+        index: 'md',
+        type: 'socialProfiles',
+        id: 'twitter-' + username
+    }, function (error, response) {
+        if (error) {
+            deferred.resolve(false);
+        } else {
+            console.log('Media Database Tweet: ' + username)
+            deferred.resolve(true);
+        }
+    });
+
+    return deferred.promise;
+}
+
 function processTweet(tweet) {
     var deferred = Q.defer();
 
     if (tweet && tweet.user && tweet.user.id) {
         findUsernameFromTwitterId(tweet.user.id).then(function(twitterProfile) {
-            addTweetToEs(tweet, twitterProfile).then(function(status) {
-                if (status) {
-                    deferred.resolve(true);
-                } else {
-                    var error = 'Elasticsearch add failed';
+            checkIfUserIsInMediaDatabase(twitterProfile).then(function(userInMediaDatabase) {
+                addTweetToEs(tweet, twitterProfile, userInMediaDatabase).then(function(status) {
+                    if (status) {
+                        deferred.resolve(true);
+                    } else {
+                        var error = 'Elasticsearch add failed';
+                        console.error(error);
+                        sentryClient.captureMessage(error);
+                        deferred.reject(error);
+                    }
+                }, function(error) {
                     console.error(error);
                     sentryClient.captureMessage(error);
                     deferred.reject(error);
-                }
+                });
             }, function(error) {
                 console.error(error);
                 sentryClient.captureMessage(error);
