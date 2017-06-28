@@ -53,12 +53,12 @@ function addESActionsToEs(esActions) {
     return deferred.promise;
 }
 
-function getTweetsPageFromEs(offset, username) {
+function getFeedsPageFromEs(indexName, typeName, offset, username) {
     var deferred = Q.defer();
 
     elasticSearchClient.search({
-        index: 'tweets',
-        type: 'tweet',
+        index: indexName,
+        type: typeName,
         body: {
             "query": {
                 "match": {
@@ -79,22 +79,22 @@ function getTweetsPageFromEs(offset, username) {
     return deferred.promise;
 }
 
-function getTweetsFromEs(offset, username, allData) {
+function getFeedsFromEs(indexName, typeName, offset, username, allData) {
     var deferred = Q.defer();
 
-    getTweetsPageFromEs(offset, username).then(function(tweets) {
+    getFeedsPageFromEs(indexName, typeName, offset, username).then(function(tweets) {
         if (tweets.length === 0) {
             deferred.resolve(allData);
         } else {
             var newData = allData.concat(tweets);
-            deferred.resolve(getTweetsFromEs(offset + 1, username, newData));
+            deferred.resolve(getFeedsFromEs(indexName, typeName, offset + 1, username, newData));
         }
     });
 
     return deferred.promise;
 }
 
-function moveTweetsToMDElastic(tweets) {
+function moveTweetsToMDElastic(tweets, feeds) {
     var deferred = Q.defer();
     var esActions = [];
 
@@ -126,6 +126,38 @@ function moveTweetsToMDElastic(tweets) {
         esActions.push(deleteRecord);
     }
 
+    for (var i = 0; i < feeds.length; i++) {
+        var indexRecord = {
+            index: {
+                _index: 'feeds',
+                _type: 'md-feed',
+                _id: feeds[i]._id
+            }
+        };
+
+        if (feeds[i]._source.data.Type === 'Tweet') {
+            var dataRecord = feeds[i]._source && feeds[i]._source.data;
+            esActions.push(indexRecord);
+            esActions.push({
+                data: dataRecord
+            });
+        }
+    }
+
+    for (var i = 0; i < feeds.length; i++) {
+        var deleteRecord = {
+            delete: {
+                _index: 'feeds',
+                _type: 'feed',
+                _id: feeds[i]._id
+            }
+        };
+
+        if (feeds[i]._source.data.Type === 'Tweet') {
+            esActions.push(deleteRecord);
+        }
+    }
+
     var allPromises = [];
 
     var i, j, temp, chunk = 100;
@@ -141,9 +173,15 @@ function moveTweetsToMDElastic(tweets) {
 function transitionTweetsToMd(twitterUsername) {
     var deferred = Q.defer();
 
-    getTweetsFromEs(0, twitterUsername, []).then(function(tweets) {
-        moveTweetsToMDElastic(tweets).then(function(status) {
-            deferred.resolve(status);
+    getFeedsFromEs('tweets', 'tweet', 0, twitterUsername, []).then(function(tweets) {
+        getFeedsFromEs('feeds', 'feed', 0, twitterUsername, []).then(function(feeds) {
+            moveSocialDataToMDElastic(tweets, feeds).then(function(status) {
+                deferred.resolve(status);
+            }, function(error) {
+                sentryClient.captureMessage(error);
+                console.error(error);
+                deferred.reject(error);
+            });
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);
