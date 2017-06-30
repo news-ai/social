@@ -16,7 +16,7 @@ var instagramTimeseries = require('../../time-series/instagram');
 
 // Instantiate a elasticsearch client
 var elasticSearchClient = new elasticsearch.Client({
-    host: 'https://newsai:XkJRNRx2EGCd6@search1.newsai.org',
+    host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
     // log: 'trace',
     rejectUnauthorized: false
 });

@@ -13,7 +13,7 @@ var gcloud = require('google-cloud')({
 
 // Instantiate a elasticsearch client
 var client = new elasticsearch.Client({
-    host: 'https://newsai:XkJRNRx2EGCd6@search1.newsai.org',
+    host: 'https://newsai:XkJRNRx2EGCd6@search.newsai.org',
     // log: 'trace',
     rejectUnauthorized: false
 });
