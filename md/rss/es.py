@@ -5,6 +5,7 @@ import os
 
 # Third-party app imports
 import certifi
+import moment
 from elasticsearch import Elasticsearch, helpers
 
 # Elasticsearch
@@ -23,12 +24,22 @@ es = Elasticsearch(
 
 
 def get_rss_feeds_to_fetch():
-    date_from = moment.now().locale("US/Eastern").timezone("Europe/London").subtract(days=1).replace(
-        hours=0, minutes=0, seconds=0).format('YYYY-MM-DDTHH:mm:ss')
+    updated_before = moment.now().locale("US/Eastern").subtract(minutes=15).format('YYYY-MM-DDTHH:mm:ss')
 
     query = {
         'size': 5000,
-        'from': 0
+        'from': 0,
+        'query': {
+            'bool': {
+                'must': [{
+                    'range': {
+                        'data.Updated': {
+                            'to': updated_before
+                        }
+                    }
+                }]
+            }
+        }
     }
 
     res = es.search(index='md', doc_type='feeds', body=query)
