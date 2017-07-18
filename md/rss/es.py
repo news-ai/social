@@ -23,8 +23,13 @@ es = Elasticsearch(
 )
 
 
+def add_headline_to_md():
+    pass
+
+
 def get_rss_feeds_to_fetch():
-    updated_before = moment.now().locale("US/Eastern").subtract(minutes=15).format('YYYY-MM-DDTHH:mm:ss')
+    updated_before = moment.now().locale(
+        "US/Eastern").subtract(minutes=15).format('YYYY-MM-DDTHH:mm:ss')
 
     query = {
         'size': 5000,
