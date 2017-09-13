@@ -105,9 +105,7 @@ function syncIGAndES() {
     var deferred = Q.defer();
 
     instagram.getInstagramProfiles(0, []).then(function(data) {
-        console.log(data.length);
         instagram.getInstagramProfilesFromAPI(data).then(function(instagramProfiles) {
-            console.log(instagramProfiles.length);
             var profiles = [];
 
             for (var i = instagramProfiles.length - 1; i >= 0; i--) {
@@ -163,7 +161,7 @@ function runUpdates() {
     // Run one initially -- mostly for when testing
     console.log('Beginning run');
     syncIGAndES().then(function(status) {
-        console.log(status);
+        console.log('Completed execution');
     }, function(error) {
         sentryClient.captureMessage(error);
         console.error(error);

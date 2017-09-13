@@ -27,7 +27,7 @@ function runUpdates() {
     syncPostsTwitter.syncTwitterAndES(twitterClient, sentryClient, 'tweet', 'feed').then(function(status) {
         rp('https://hchk.io/a58c62df-5369-4476-b2f2-6c309949a75a')
             .then(function(htmlString) {
-                console.log('Finished')
+                console.log('Finished');
             })
             .catch(function(error) {
                 console.error(error);
@@ -44,7 +44,7 @@ function runUpdates() {
         syncPostsTwitter.syncTwitterAndES(twitterClient, sentryClient, 'tweet', 'feed').then(function(status) {
             rp('https://hchk.io/a58c62df-5369-4476-b2f2-6c309949a75a')
                 .then(function(htmlString) {
-                    console.log('Finished')
+                    console.log('Finished');
                 })
                 .catch(function(error) {
                     console.error(error);

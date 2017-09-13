@@ -39,7 +39,7 @@ function addESActionsToEs(esActions) {
         body: esActions
     }, function(error, response) {
         if (error) {
-            console.log(error);
+            console.error(error);
             sentryClient.captureMessage(error);
             deferred.reject(error);
         }
@@ -94,7 +94,7 @@ function getTwitterProfilesFromUsernames(twitterUsernames) {
         if (!error) {
             deferred.resolve(twitterProfiles);
         } else {
-            console.log(response);
+            console.error(response);
             console.error(error);
             sentryClient.captureMessage(error);
             deferred.reject(new Error(error));
@@ -122,7 +122,6 @@ function syncTwitterAndES() {
 
     // Get tweets from ES
     twitter.getTwitterProfilesFromEs(0, []).then(function(data) {
-        console.log(data.length);
         var twitterUsernames = [];
 
         for (var i = 0; i < data.length; i++) {
@@ -134,7 +133,6 @@ function syncTwitterAndES() {
 
             // Add the data to elasticsearch
             addToElastic(allProfiles).then(function(status) {
-                console.log('Number of Twitter profiles in ES: ' + allProfiles.length);
                 twitterTimeseries.addTwitterUsersToTimeSeries(allProfiles).then(function(status) {
                     // Health check
                     rp('https://hchk.io/56df6d0c-974f-4ffe-94b0-ee66cfad7977')
@@ -170,11 +168,7 @@ function runUpdates() {
     // Run one initially -- mostly for when testing
     console.log('Beginning run');
     syncTwitterAndES().then(function(status) {
-        for (var i = 0; i < status.length; i++) {
-            if (status[i].errors) {
-                console.log(status[i].items);
-            }
-        }
+        console.log('Finished running');
     }, function(error) {
         console.error(error);
     })
@@ -183,7 +177,7 @@ function runUpdates() {
     setInterval(function() {
         console.log('Updating Twitter posts');
         syncTwitterAndES().then(function(status) {
-            console.log(status);
+            console.log('Finished running');
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);

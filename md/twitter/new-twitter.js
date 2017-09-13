@@ -46,7 +46,6 @@ function addESActionsToEs(esActions) {
             sentryClient.captureMessage(error);
             deferred.reject(error);
         }
-        console.log(response);
         deferred.resolve(response);
     });
 

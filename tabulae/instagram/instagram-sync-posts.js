@@ -185,7 +185,7 @@ function runUpdates() {
     // Run one initially -- mostly for when testing
     console.log('Beginning run');
     syncIGAndES().then(function(status) {
-        console.log(status);
+        console.log('Done');
     }, function(error) {
         console.error(error);
     })
@@ -194,7 +194,7 @@ function runUpdates() {
     setInterval(function() {
         console.log('Updating Instagram posts');
         syncIGAndES().then(function(status) {
-            console.log(status);
+            console.log('Done');
         }, function(error) {
             sentryClient.captureMessage(error);
             console.error(error);

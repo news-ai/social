@@ -29,7 +29,6 @@ sentryClient.patchGlobal();
 function sendInstagramProfileToPubsub(data) {
     var allPromises = [];
     for (var i = data.length - 1; i >= 0; i--) {
-        console.log('Starting execution for ' + data[i].username);
         var toExecute = instagram.addFeedToPubSub(topicName, data[i]);
         allPromises.push(toExecute);
     }
@@ -76,7 +75,7 @@ function runUpdates() {
     // Run one initially -- mostly for when testing
     console.log('Beginning run');
     syncIGAndES().then(function(status) {
-        console.log(status);
+        console.log('Completed execution');
     }, function(error) {
         console.error(error);
     })
