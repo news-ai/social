@@ -23,4 +23,4 @@ times==0.7
 tldextract==1.5.1
 tzlocal==1.4
 urllib3==1.21.1
-wheel==0.24.0
+wheel==0.38.1
